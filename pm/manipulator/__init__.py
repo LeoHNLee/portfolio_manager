@@ -5,6 +5,10 @@ import pandas as pd
 from datetime import datetime as dt
 
 
+def load_origin(path:str='data/origin.csv'):
+    return pd.read_csv(path, encoding='utf-8')
+
+
 def get_acnt(acnt, name:str) -> pd.DataFrame:
     path = cfg.PATH_ACNT+name+'.csv{Enter}'
     acnt.SetFocus()
