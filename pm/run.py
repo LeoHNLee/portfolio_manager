@@ -1,5 +1,9 @@
 import uiautomation as ui
 
+from pm.control.manipulator import Manipulator
 
-acnt = ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779')
-set_krw = ui.ButtonControl(searchDepth=5, Name='원화기준')
+
+
+
+STOCK = Manipulator.get_stock()
+FLOW = Manipulator.get_flow(acnt, set_krw)
