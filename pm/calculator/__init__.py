@@ -1,16 +1,19 @@
 import pandas as pd
 import numpy as np
 
+from pm.control.casting import fstr2int
 
-class CurrentDF(pd.DataFrame):
+
+class Calculator(pd.DataFrame):
     @staticmethod
     def read_csv(*args, **kwargs):
         df = pd.read_csv(*args, **kwargs)
-        return CurrentDF(df.values, columns=df.columns, index=df.index)
+        return Calculator(df.values, columns=df.columns, index=df.index)
 
 
     def calculate(self, tmp_df:pd.DataFrame, usd:int=0, krw:int=0):
         # input usd, krw
+        tmp_df['현재가'] = tmp_df['현재가'].apply(fstr2int)
 
         self['current_amt'] = self['name'].apply(lambda x: self.__calc_current_amt__(x, tmp_df))
         self['current_val'] = self.apply(lambda x: self.__calc_current_val__(x, tmp_df), axis=1)
