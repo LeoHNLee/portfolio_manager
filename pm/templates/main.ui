@@ -293,6 +293,9 @@ p, li { white-space: pre-wrap; }
         <day>1</day>
        </datetime>
       </property>
+      <property name="displayFormat">
+       <string>yyyy년 MM월 dd일 hh:mm</string>
+      </property>
      </widget>
      <widget class="QDateTimeEdit" name="USCntrEndTime_dt">
       <property name="geometry">
@@ -302,6 +305,9 @@ p, li { white-space: pre-wrap; }
         <width>180</width>
         <height>22</height>
        </rect>
+      </property>
+      <property name="displayFormat">
+       <string>yyyy년 MM월 dd일 hh:mm</string>
       </property>
      </widget>
      <widget class="QPushButton" name="USCntrrEnd">
