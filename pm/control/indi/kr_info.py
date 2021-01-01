@@ -1,13 +1,17 @@
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
+
 from pm.config import cfg
 from pm.control.indi import IndiAPI
 from pm.control.casting import str2int, fstr2float
 
 
 class IndiKRInfo(IndiAPI):
-    def req(self, manip=None, pb=None, backup=False):
-        self.pb = pb
-        self.manip = manip
+    def req(self, origin=None, pbar=None, backup=False, status_tb=None):
+        self.pbar = pbar
+        self.origin = origin
         self.backup = backup
+        self.status_tb = status_tb
         return self.request(
             name='SABA655Q1',
             datas={
@@ -39,11 +43,11 @@ class IndiKRInfo(IndiAPI):
         })
         for col in ret.columns:
             ret[col] = ret[col].apply(str2int)
-        if self.manip is not None:
-            self.manip.set_total_acnt(ret)
-        if self.pb is not None:
-            new_val = self.pb.value() + 50
-            self.pb.setValue(new_val)
+        if self.origin is not None:
+            self.origin.set_total_acnt(ret)
+        if self.pbar is not None:
+            new_val = self.pbar.value() + 50
+            self.pbar.setValue(new_val)
         self.__req_stock__()
 
 
@@ -55,10 +59,14 @@ class IndiKRInfo(IndiAPI):
         })
         ret['결제일잔고수량'] = ret['결제일잔고수량'].apply(str2int)
         ret['현재가'] = ret['현재가'].apply(fstr2float)
-        if self.manip is not None:
-            self.manip.set_stock_acnt(ret)
+        if self.origin is not None:
+            self.origin.set_stock_acnt(ret)
         if self.backup:
-            self.manip.backup()
-        if self.pb is not None:
-            new_val = self.pb.value() + 50
-            self.pb.setValue(new_val)
+            self.origin.backup()
+        if self.pbar is not None:
+            new_val = self.pbar.value() + 50
+            self.pbar.setValue(new_val)
+        if self.status_tb is not None:
+            self.status_tb.setTextColor(QColor(0, 255, 0, 255))
+            self.status_tb.setPlainText('Indi Info Updated!!')
+            self.status_tb.setAlignment(Qt.AlignCenter)

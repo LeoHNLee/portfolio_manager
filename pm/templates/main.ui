@@ -75,7 +75,7 @@ p, li { white-space: pre-wrap; }
       <x>10</x>
       <y>100</y>
       <width>421</width>
-      <height>751</height>
+      <height>720</height>
      </rect>
     </property>
     <property name="title">
@@ -87,7 +87,7 @@ p, li { white-space: pre-wrap; }
        <x>10</x>
        <y>20</y>
        <width>401</width>
-       <height>211</height>
+       <height>170</height>
       </rect>
      </property>
      <property name="title">
@@ -96,22 +96,22 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="pushButton_2">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>80</y>
-        <width>170</width>
+        <width>150</width>
         <height>23</height>
        </rect>
       </property>
       <property name="text">
-       <string>Ready for Indi</string>
+       <string>Run</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="USIndiGet_btn">
+     <widget class="QPushButton" name="USIndiGet_pb">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>110</y>
-        <width>170</width>
+        <width>150</width>
         <height>23</height>
        </rect>
       </property>
@@ -124,7 +124,7 @@ p, li { white-space: pre-wrap; }
        <rect>
         <x>210</x>
         <y>20</y>
-        <width>180</width>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -179,53 +179,7 @@ p, li { white-space: pre-wrap; }
        <rect>
         <x>210</x>
         <y>50</y>
-        <width>180</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="html">
-       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-     <widget class="QTextBrowser" name="textBrowser">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>80</y>
-        <width>180</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="html">
-       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-     <widget class="QTextBrowser" name="textBrowser_3">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>170</y>
-        <width>180</width>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -246,22 +200,22 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="pushButton_5">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>170</y>
-        <width>170</width>
+        <x>220</x>
+        <y>80</y>
+        <width>150</width>
         <height>23</height>
        </rect>
       </property>
       <property name="text">
-       <string>Quit Indi</string>
+       <string>Quit</string>
       </property>
      </widget>
      <widget class="QCheckBox" name="USIndiGetBackup_cb">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>130</y>
-        <width>180</width>
+        <width>150</width>
         <height>30</height>
        </rect>
       </property>
@@ -275,12 +229,12 @@ p, li { white-space: pre-wrap; }
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QProgressBar" name="USIndiGet_pb">
+     <widget class="QProgressBar" name="USIndiGet_pbar">
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>190</x>
         <y>110</y>
-        <width>180</width>
+        <width>210</width>
         <height>20</height>
        </rect>
       </property>
@@ -293,9 +247,9 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>500</y>
+       <y>450</y>
        <width>401</width>
-       <height>231</height>
+       <height>260</height>
       </rect>
      </property>
      <property name="title">
@@ -305,7 +259,7 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>210</x>
-        <y>20</y>
+        <y>50</y>
         <width>180</width>
         <height>20</height>
        </rect>
@@ -320,11 +274,11 @@ p, li { white-space: pre-wrap; }
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QDateTimeEdit" name="USCntrStartTime">
+     <widget class="QDateTimeEdit" name="USCntrStartTime_dt">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>40</y>
+        <y>70</y>
         <width>180</width>
         <height>22</height>
        </rect>
@@ -340,11 +294,11 @@ p, li { white-space: pre-wrap; }
        </datetime>
       </property>
      </widget>
-     <widget class="QDateTimeEdit" name="USCntrEndTime">
+     <widget class="QDateTimeEdit" name="USCntrEndTime_dt">
       <property name="geometry">
        <rect>
         <x>210</x>
-        <y>40</y>
+        <y>70</y>
         <width>180</width>
         <height>22</height>
        </rect>
@@ -354,7 +308,7 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>230</x>
-        <y>80</y>
+        <y>110</y>
         <width>130</width>
         <height>23</height>
        </rect>
@@ -363,11 +317,11 @@ p, li { white-space: pre-wrap; }
        <string>Stop</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="USCntrStart_btn">
+     <widget class="QPushButton" name="USCntrStart_pb">
       <property name="geometry">
        <rect>
         <x>40</x>
-        <y>80</y>
+        <y>110</y>
         <width>130</width>
         <height>23</height>
        </rect>
@@ -380,7 +334,7 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>20</y>
+        <y>50</y>
         <width>180</width>
         <height>20</height>
        </rect>
@@ -399,7 +353,7 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>130</y>
+        <y>160</y>
         <width>170</width>
         <height>21</height>
        </rect>
@@ -412,7 +366,7 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>160</y>
+        <y>190</y>
         <width>170</width>
         <height>21</height>
        </rect>
@@ -425,7 +379,7 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>50</x>
-        <y>190</y>
+        <y>220</y>
         <width>300</width>
         <height>23</height>
        </rect>
@@ -438,21 +392,21 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>110</y>
-        <width>380</width>
+        <y>140</y>
+        <width>370</width>
         <height>16</height>
        </rect>
       </property>
       <property name="value">
-       <number>24</number>
+       <number>0</number>
       </property>
      </widget>
      <widget class="QTextBrowser" name="USCntrIter_tb">
       <property name="geometry">
        <rect>
         <x>200</x>
-        <y>130</y>
-        <width>180</width>
+        <y>160</y>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -474,8 +428,8 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>200</x>
-        <y>160</y>
-        <width>180</width>
+        <y>190</y>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -493,14 +447,60 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
+     <widget class="QTextEdit" name="USCntrIndiStatus_tb">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>170</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Indi Info Not Updated&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+     <widget class="QTextEdit" name="USCntrOriginStatus_tb">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>20</y>
+        <width>170</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Origin File Not Loaded&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_5">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>240</y>
+       <y>200</y>
        <width>401</width>
-       <height>121</height>
+       <height>91</height>
       </rect>
      </property>
      <property name="title">
@@ -511,7 +511,7 @@ p, li { white-space: pre-wrap; }
        <rect>
         <x>210</x>
         <y>20</y>
-        <width>180</width>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -545,73 +545,27 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="pushButton_6">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>50</y>
-        <width>170</width>
+        <width>150</width>
         <height>23</height>
        </rect>
       </property>
       <property name="text">
-       <string>Ready for SHI</string>
-      </property>
-     </widget>
-     <widget class="QTextBrowser" name="textBrowser_4">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>50</y>
-        <width>180</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="html">
-       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>Run</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_7">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>80</y>
-        <width>170</width>
+        <x>220</x>
+        <y>50</y>
+        <width>150</width>
         <height>23</height>
        </rect>
       </property>
       <property name="text">
-       <string>Quit SHI</string>
-      </property>
-     </widget>
-     <widget class="QTextBrowser" name="textBrowser_5">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>80</y>
-        <width>180</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="html">
-       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>Quit</string>
       </property>
      </widget>
     </widget>
@@ -619,20 +573,20 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>370</y>
+       <y>300</y>
        <width>401</width>
-       <height>121</height>
+       <height>140</height>
       </rect>
      </property>
      <property name="title">
-      <string>Oirign File Handler</string>
+      <string>Origin File Handler</string>
      </property>
-     <widget class="QTextEdit" name="textEdit_4">
+     <widget class="QTextEdit" name="USOriginDir_tb">
       <property name="geometry">
        <rect>
         <x>210</x>
         <y>20</y>
-        <width>180</width>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -650,12 +604,12 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;data/&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
-     <widget class="QTextEdit" name="textEdit_5">
+     <widget class="QTextEdit" name="USOriginFile_tb">
       <property name="geometry">
        <rect>
         <x>210</x>
         <y>50</y>
-        <width>180</width>
+        <width>170</width>
         <height>20</height>
        </rect>
       </property>
@@ -673,20 +627,20 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;origin.csv&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_8">
+     <widget class="QPushButton" name="USOriginFileShow_pb">
       <property name="geometry">
        <rect>
-        <x>50</x>
+        <x>220</x>
         <y>80</y>
-        <width>300</width>
+        <width>151</width>
         <height>23</height>
        </rect>
       </property>
       <property name="text">
-       <string>Show Origin File Information</string>
+       <string>Show</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_8">
+     <widget class="QLabel" name="USOriginDir_lb">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -710,6 +664,38 @@ p, li { white-space: pre-wrap; }
       </property>
       <property name="text">
        <string>Origin File</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="USOriginFileLoad_pb">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>80</y>
+        <width>150</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="USOriginFileBackup_cb">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>100</y>
+        <width>150</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string>Backup</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
       </property>
      </widget>
     </widget>

@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 
 def dt2str(x:dt) -> str:
-    return dt.strftime('%Y%m%d%H%M%S')
+    return x.strftime('%Y%m%d%H%M%S')
 
 
 def fstr2int(x:str) -> int:

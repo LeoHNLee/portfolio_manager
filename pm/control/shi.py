@@ -2,15 +2,16 @@ import uiautomation as ui
 from uiautomation import uiautomation as ui_ui
 import pandas as pd
 import time
+import sys
 from datetime import datetime as dt
 from datetime import timedelta as td
 
 from pm.config import cfg
-from pm.control.calculator import Calculator
+from pm.control import Controller
 from pm.control.casting import dt2str
 
 
-class Manipulator(Calculator):
+class SHI(Controller):
     FR_ACNT = ui.WindowControl(searchDepth=2, Name='(3805)주식잔고(해외주식)')
 
     ORDER = ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)')
@@ -35,13 +36,13 @@ class Manipulator(Calculator):
 
     @staticmethod
     def from_df(df):
-        return Manipulator(df.values, columns=df.columns, index=df.index)
+        return SHI(df.values, columns=df.columns, index=df.index)
 
 
     @staticmethod
     def read_csv(*args, **kwargs):
         df = pd.read_csv(*args, **kwargs)
-        return Manipulator.from_df(df)
+        return SHI.from_df(df)
 
 
     def backup(self, backup_path:str=None):
@@ -50,7 +51,7 @@ class Manipulator(Calculator):
         self.to_csv(backup_path)
 
 
-    def manipulate(self, start_time:dt=None, end_time:dt=None):
+    def manipulate(self, start_time:dt=None, end_time:dt=None, usd:int=-1, us_total:int=-1):
         if start_time is None:
             start_time=dt.now()
         if end_time is None:
@@ -59,12 +60,13 @@ class Manipulator(Calculator):
         while dt.now() < start_time:
             time.sleep(10)
 
-        FLOW_KRW = self.get_flow_krw(Manipulator.rt_krw)
         while dt.now() < end_time:
-            FLOW = self.get_flow(Manipulator.rt, Manipulator.set_krw)
-            USD = 0
-            KRW = 0
-            self.calculate(FLOW)
+            FLOW = self.get_flow(SHI.rt, SHI.RT_SET_KRW)
+            usd = self.calculate(
+                tmp_df=FLOW,
+                usd=usd,
+                us_total=us_total,
+            )
             self['virtual_amt'] -= self.apply(self.bid_ask, axis=1)
         self.backup()
 
@@ -75,7 +77,7 @@ class Manipulator(Calculator):
         fn:str='origin.csv',
         backup:bool=True
     ):
-        manip = Manipulator.read_csv(path, encoding='utf-8')
+        manip = SHI.read_csv(path, encoding='utf-8')
         if backup:
             manip.backup()
         return manip
@@ -95,7 +97,7 @@ class Manipulator(Calculator):
         ui.MenuItemControl(searchDepth=3, Name='엑셀로 내보내기').Click()
         ui.MenuItemControl(searchDepth=4, Name='CSV').Click()
         ui.EditControl(searchDepth=6, Name='파일 이름(N):').SendKeys(file_path+'{Enter}')
-        return Manipulator.read_csv(file_path, encoding='cp949')
+        return SHI.read_csv(file_path, encoding='cp949')
 
 
     def bid_ask(self, row) -> int:
