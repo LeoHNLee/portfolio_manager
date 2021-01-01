@@ -1,9 +1,11 @@
-import uiautomation as ui
+import sys
+from PyQt5.QtWidgets import QApplication
 
-from pm.control.manipulator import Manipulator
+from pm.view import PMWindow
 
 
-
-
-STOCK = Manipulator.get_stock()
-FLOW = Manipulator.get_flow(acnt, set_krw)
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    pm_window = PMWindow()
+    pm_window.show()
+    app.exec_()
