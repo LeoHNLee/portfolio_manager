@@ -15,3 +15,7 @@ def fstr2float(x:str) -> float:
     if isinstance(x, str):
         x = x.replace(',', '')
     return float(x)
+
+
+def str2int(x:str) -> int:
+    return int(x)

@@ -4,7 +4,8 @@ from pm.control.casting import str2int
 
 
 class IndiTotalAcnt(IndiAPI):
-    def req(self):
+    def req(self, manip):
+        self.manip = manip
         return self.request(
             name='SABA655Q1',
             datas={
@@ -15,7 +16,8 @@ class IndiTotalAcnt(IndiAPI):
         )
 
 
-    def receive(self):
+    def receive(self, req_id:int=None):
+        self.OK = True
         ret = self.rec_single_data({
             '순자산평가금액': 0,
             '주식평가금액': 3,
@@ -25,4 +27,5 @@ class IndiTotalAcnt(IndiAPI):
         })
         for col in ret.columns:
             ret[col] = ret[col].apply(str2int)
-        return ret
+
+        self.manip.set_total_acnt(ret)

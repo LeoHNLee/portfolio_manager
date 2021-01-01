@@ -8,6 +8,9 @@ from pm.config import cfg
 
 
 class IndiAPI(QMainWindow):
+    OK = False
+
+
     def __init__(self):
         super().__init__()
         self.indi = QAxWidget('GIEXPERTCONTROL.GiExpertControlCtrl.1')
@@ -30,9 +33,10 @@ class IndiAPI(QMainWindow):
         :       -0: fail
         :       -others: request id
         '''
+        self.OK = False
         return self.indi.dynamicCall("RequestData()")
-    
-    
+
+
     def get_single_data(self, index:int):
         return self.indi.dynamicCall('GetSingleData(int)', index)
 
