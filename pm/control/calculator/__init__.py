@@ -36,7 +36,7 @@ class Calculator(pd.DataFrame):
 
     def set_total_acnt(self, total_acnt):
         krw = total_acnt[['현금증거금합계', '인출가능금액합계']].sum().sum()
-        krw_idx = self[self['name']=='KRW'].idx[0]
+        krw_idx = self[self['name']=='KRW'].index[0]
         self.loc[krw_idx, 'current_val'] = krw
         self.us_total = total_acnt['외화자산평가금액'].sum()
 

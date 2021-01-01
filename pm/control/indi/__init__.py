@@ -1,21 +1,21 @@
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
 from PyQt5.QAxContainer import *
-from PyQt5.QtWidgets import QMainWindow
 from pandas import DataFrame
 
 from pm.config import cfg
 
 
-class IndiAPI(QMainWindow):
-    OK = False
-
-
+class IndiAPI(object):
     def __init__(self):
         super().__init__()
         self.indi = QAxWidget('GIEXPERTCONTROL.GiExpertControlCtrl.1')
         self.indi.ReceiveData.connect(self.receive)
         self.indi.ReceiveSysMsg.connect(self.recieve_sys_msg)
+
+        self.req_ids = {}
+        self.rec_funcs = {
+            'SABA655Q1': self.rec_total_acnt,
+            'SABA200QB': self.rec_stock_acnt,
+        }
 
 
     def set_query_name(self, name:str) -> bool:
@@ -26,15 +26,16 @@ class IndiAPI(QMainWindow):
         return self.indi.dynamicCall('SetSingleData(int, QString)', index, data)
 
 
-    def request_data(self) -> int:
+    def request_data(self, name) -> int:
         '''
         :output:
         :   -request id
         :       -0: fail
         :       -others: request id
         '''
-        self.OK = False
-        return self.indi.dynamicCall("RequestData()")
+        req_id = self.indi.dynamicCall("RequestData()")
+        self.req_ids[req_id] = name
+        return req_id
 
 
     def get_single_data(self, index:int):
@@ -53,10 +54,19 @@ class IndiAPI(QMainWindow):
         self.set_query_name(name)
         for index, data in datas.items():
             self.set_single_data(index, data)
-        return self.request_data()
+        return self.request_data(name)
 
 
-    def receive(self, req_id):
+    def receive(self, req_id:int=None):
+        name = self.req_ids[req_id]
+        return self.rec_funcs[name]()
+
+
+    def rec_total_acnt(self):
+        raise NotImplementedError()
+
+
+    def rec_stock_acnt(self):
         raise NotImplementedError()
 
 
