@@ -1,10 +1,14 @@
 import pandas as pd
 import numpy as np
 
-from pm.control.casting import fstr2int
-
 
 class Controller(pd.DataFrame):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.usd = -1
+        self.us_total = -1
+
+
     @staticmethod
     def from_df(df):
         return Controller(df.values, columns=df.columns, index=df.index)
@@ -46,29 +50,25 @@ class Controller(pd.DataFrame):
         self['current_val'] = self.apply(lambda x: self.calc_current_val_indi(x, stock_acnt), axis=1)
 
 
-    def calculate(self, tmp_df:pd.DataFrame, usd:int=0, krw:int=0, us_total:int=0):
-        # input usd, krw
-        tmp_df['현재가'] = tmp_df['현재가'].apply(fstr2int)
-
+    def calculate(self, tmp_df:pd.DataFrame):
         self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df))
         self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
         self['current_total'] = self.apply(self.calc_current_total, axis=1)
         self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
         self['pivot_val'] = self['pivot_rate'] * self['current_val']
 
-        if usd >= 0:
+        if self.usd >= 0:
             pass
-        elif us_total >= 0:
+        elif self.us_total >= 0:
             us_stock_total = self[self['cat0']=='US']['current_total'].sum()
-            usd = us_total - us_stock_total
+            self.usd = self.us_total - us_stock_total
         else:
             pass
-        self[self['name']=='USD']['current_val'] = usd
+        self[self['name']=='USD']['current_val'] = self.usd
         total = self['current_total'].sum()
         self['target_total'] = self['target_rate'] * total
         self['target_diff'] = self['target_total'] - self['current_total']
         self['virtual_diff'] = self['virtual_total'] + self['target_diff']
-        return usd
 
 
     def calc_current_amt(self, row, tmp_df:pd.DataFrame):

@@ -8,7 +8,7 @@ from datetime import timedelta as td
 
 from pm.config import cfg
 from pm.control import Controller
-from pm.control.casting import dt2str
+from pm.control.casting import dt2str, fstr2int
 
 
 class SHI(Controller):
@@ -51,7 +51,7 @@ class SHI(Controller):
         self.to_csv(backup_path)
 
 
-    def manipulate(self, start_time:dt=None, end_time:dt=None, usd:int=-1, us_total:int=-1):
+    def run(self, start_time:dt=None, end_time:dt=None):
         if start_time is None:
             start_time=dt.now()
         if end_time is None:
@@ -61,26 +61,10 @@ class SHI(Controller):
             time.sleep(10)
 
         while dt.now() < end_time:
-            FLOW = self.get_flow(SHI.rt, SHI.RT_SET_KRW)
-            usd = self.calculate(
-                tmp_df=FLOW,
-                usd=usd,
-                us_total=us_total,
-            )
-            self['virtual_amt'] -= self.apply(self.bid_ask, axis=1)
+            tmp_df = self.get_flow(SHI.rt, SHI.RT_SET_KRW)
+            self.calculate(tmp_df=tmp_df)
+            self['virtual_amt'] -= self.apply(self.order, axis=1)
         self.backup()
-
-
-    @staticmethod
-    def get_stock(
-        path:str=cfg.PATH_DATA,
-        fn:str='origin.csv',
-        backup:bool=True
-    ):
-        manip = SHI.read_csv(path, encoding='utf-8')
-        if backup:
-            manip.backup()
-        return manip
 
 
     @staticmethod
@@ -97,16 +81,19 @@ class SHI(Controller):
         ui.MenuItemControl(searchDepth=3, Name='엑셀로 내보내기').Click()
         ui.MenuItemControl(searchDepth=4, Name='CSV').Click()
         ui.EditControl(searchDepth=6, Name='파일 이름(N):').SendKeys(file_path+'{Enter}')
-        return SHI.read_csv(file_path, encoding='cp949')
+        ret = SHI.read_csv(file_path, encoding='cp949')
+        ret['현재가'] = ret['현재가'].apply(fstr2int)
+        return ret
 
 
-    def bid_ask(self, row) -> int:
+    def order(self, row) -> int:
+        ticker = row['name']
         cat = row['cat0']
         pos = row['position']
         diff = row['virtual_diff']
         pivot = row['pivot_val']
         cprice = row['currrent_val']
-        amt = self.bid_ask_amt(diff, cprice)
+        amt = self.order_amt(diff, cprice)
 
         if cat=='CASH':
             pass
@@ -114,49 +101,48 @@ class SHI(Controller):
         elif (cat=='KR')\
             or (pos == 'neutral'):
             if diff < -pivot:
-                self.bid(cprice, amt)
+                self.bid(ticker, amt, cprice)
             elif diff > pivot:
-                self.ask(cprice, amt)
+                self.ask(ticker, amt, cprice)
 
         elif pos == 'buy':
             if diff < -pivot:
                 return amt
             elif diff > pivot:
-                self.ask(cprice, amt)
+                self.ask(ticker, amt, cprice)
 
         elif pos in ('sell', 'out'):
             if diff < -pivot:
-                self.bid(cprice, amt)
+                self.bid(ticker, amt, cprice)
             elif diff > pivot:
                 return amt
         return 0
 
 
-    def bid(self, ticker:str, amt:str):
+    def bid(self, ticker:str, amt:int, cprice:float):
         self.MINI_ORDER.SetFocus()
         self.BID_TICKER.SendKeys(ticker+'{Enter}')
-        self.BID_AMT.SendKeys(amt+'{Enter}')
+        self.BID_AMT.SendKeys(str(amt)+'{Enter}')
         self.BID_PRICE.Click()
         self.BID_BTN.Click()
         ui_ui.SendKeys('{Enter}')
         ui_ui.SendKeys('{Enter}')
-        # usd 조정
+        self.usd -= amt*cprice
 
 
-    def ask(self, ticker, amt):
+    def ask(self, ticker:str, amt:int, cprice:float):
         self.ORDER.SetFocus()
-        # self.BTN_ASK_US.Click()
         self.ASK_TICKER.SendKeys(ticker+'{Enter}')
-        self.ASK_AMT.SendKeys(amt+'{Enter}')
+        self.ASK_AMT.SendKeys(str(amt)+'{Enter}')
         self.ASK_PRICE.Click()
         self.ASK_BTN.Click()
         ui_ui.SendKeys('{Enter}')
         ui_ui.SendKeys('{Enter}')
-        # usd 조정
+        self.usd += amt*cprice
 
 
     @staticmethod
-    def bid_ask_amt(diff:float, cprice:int) -> int:
+    def order_amt(diff:float, cprice:int) -> int:
         diff = abs(diff)
         if diff < cprice:
             return 1
