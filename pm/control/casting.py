@@ -28,6 +28,8 @@ def qtdt2dt(x):
     x = QDateTime.toString(x)
     x = x.split()
     ret = dt.strptime(' '.join(x[-2:]), '%H:%M:%S %Y')
-    ret.month = int(x[1])
-    ret.day = int(x[2])
+    ret = ret.replace(
+        month=int(x[1]),
+        day=int(x[2]),
+    )
     return ret

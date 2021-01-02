@@ -1,3 +1,5 @@
+import asyncio
+import time
 from datetime import datetime as dt
 
 from PyQt5 import uic
@@ -53,9 +55,9 @@ class PMWindow(QMainWindow, form_class):
 
 
     def us_origin_file_load(self):
-        dir = self.USOriginDir_tb.toPlainText()
+        dir_path = self.USOriginDir_tb.toPlainText()
         fn = self.USOriginFile_tb.toPlainText()
-        self.origin = SHI.read_csv(f'{dir}{fn}')
+        self.origin = SHI.read_csv(f'{dir_path}{fn}')
         self.USCntrOriginStatus_tb.setTextColor(QColor(0, 255, 0, 255))
         self.USCntrOriginStatus_tb.setPlainText('Origin File Loaded!!')
         self.USCntrOriginStatus_tb.setAlignment(Qt.AlignCenter)
@@ -81,4 +83,13 @@ class PMWindow(QMainWindow, form_class):
 
         start_time = qtdt2dt(self.USCntrStartTime_dt)
         end_time = qtdt2dt(self.USCntrEndTime_dt)
-        self.origin.run(start_time, end_time)
+        time.sleep(10)
+        asyncio.run(
+            self.origin.run(
+                start_time,
+                end_time,
+                self.USCntr_pbar,
+                self.USCntrIter_tb,
+                self.USCntrTrans_tb,
+            )
+        )

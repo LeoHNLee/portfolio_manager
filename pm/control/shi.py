@@ -1,14 +1,15 @@
+import asyncio
+import time
+from datetime import datetime as dt
+from datetime import timedelta as td
 import uiautomation as ui
 from uiautomation import uiautomation as ui_ui
 import pandas as pd
-import time
-import sys
-from datetime import datetime as dt
-from datetime import timedelta as td
 
 from pm.config import cfg
 from pm.control import Controller
 from pm.control.casting import dt2str, fstr2int
+from pm.control.view import pbar_cntr, tb_cntr
 
 
 class SHI(Controller):
@@ -51,19 +52,29 @@ class SHI(Controller):
         self.to_csv(backup_path)
 
 
-    def run(self, start_time:dt=None, end_time:dt=None):
+    async def run(
+        self, start_time:dt=None, end_time:dt=None, backup=False,
+        pbar=None, iter_tb=None, trans_tb=None,
+    ):
         if start_time is None:
             start_time=dt.now()
         if end_time is None:
             end_time=start_time+td(minutes=1)
 
         while dt.now() < start_time:
-            time.sleep(10)
+            await asyncio.sleep(60)
+
+        if backup:
+            self.backup()
 
         while dt.now() < end_time:
+            if pbar is not None:
+                pbar_cntr(pbar, start_time, end_time)
+            if iter_tb is not None:
+                tb_cntr.plus(iter_tb, 1)
             tmp_df = self.get_flow(SHI.rt, SHI.RT_SET_KRW)
             self.calculate(tmp_df=tmp_df)
-            self['virtual_amt'] -= self.apply(self.order, axis=1)
+            self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
         self.backup()
 
 
@@ -86,7 +97,7 @@ class SHI(Controller):
         return ret
 
 
-    def order(self, row) -> int:
+    def order(self, row, trans_tb=None) -> int:
         ticker = row['name']
         cat = row['cat0']
         pos = row['position']
@@ -101,25 +112,27 @@ class SHI(Controller):
         elif (cat=='KR')\
             or (pos == 'neutral'):
             if diff < -pivot:
-                self.bid(ticker, amt, cprice)
+                self.bid(ticker, amt, cprice, trans_tb)
             elif diff > pivot:
-                self.ask(ticker, amt, cprice)
+                self.ask(ticker, amt, cprice, trans_tb)
 
         elif pos == 'buy':
             if diff < -pivot:
                 return amt
             elif diff > pivot:
-                self.ask(ticker, amt, cprice)
+                self.ask(ticker, amt, cprice, trans_tb)
 
         elif pos in ('sell', 'out'):
             if diff < -pivot:
-                self.bid(ticker, amt, cprice)
+                self.bid(ticker, amt, cprice, trans_tb)
             elif diff > pivot:
                 return amt
         return 0
 
 
-    def bid(self, ticker:str, amt:int, cprice:float):
+    def bid(self, ticker:str, amt:int, cprice:float, trans_tb=None):
+        if trans_tb is not None:
+            tb_cntr.plus(trans_tb, 1)
         self.MINI_ORDER.SetFocus()
         self.BID_TICKER.SendKeys(ticker+'{Enter}')
         self.BID_AMT.SendKeys(str(amt)+'{Enter}')
@@ -130,7 +143,9 @@ class SHI(Controller):
         self.usd -= amt*cprice
 
 
-    def ask(self, ticker:str, amt:int, cprice:float):
+    def ask(self, ticker:str, amt:int, cprice:float, trans_tb=None):
+        if trans_tb is not None:
+            tb_cntr.plus(trans_tb, 1)
         self.ORDER.SetFocus()
         self.ASK_TICKER.SendKeys(ticker+'{Enter}')
         self.ASK_AMT.SendKeys(str(amt)+'{Enter}')

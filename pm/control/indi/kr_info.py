@@ -4,6 +4,7 @@ from PyQt5.QtGui import QColor
 from pm.config import cfg
 from pm.control.indi import IndiAPI
 from pm.control.casting import str2int, fstr2float
+from pm.control.view import pbar_cntr
 
 
 class IndiKRInfo(IndiAPI):
@@ -46,8 +47,7 @@ class IndiKRInfo(IndiAPI):
         if self.origin is not None:
             self.origin.set_total_acnt(ret)
         if self.pbar is not None:
-            new_val = self.pbar.value() + 50
-            self.pbar.setValue(new_val)
+            pbar_cntr.plus(self.pbar, 50)
         self.__req_stock__()
 
 
@@ -64,8 +64,7 @@ class IndiKRInfo(IndiAPI):
         if self.backup:
             self.origin.backup()
         if self.pbar is not None:
-            new_val = self.pbar.value() + 50
-            self.pbar.setValue(new_val)
+            pbar_cntr.plus(self.pbar, 50)
         if self.status_tb is not None:
             self.status_tb.setTextColor(QColor(0, 255, 0, 255))
             self.status_tb.setPlainText('Indi Info Updated!!')
