@@ -76,13 +76,13 @@ class PMWindow(QMainWindow, form_class):
             )
             return
 
-        # if not self.indi_info_updated:
-        #     QMessageBox.warning(
-        #         self, 
-        #         'Warning!', 
-        #         'Not Yet Updated the Indi Info!',
-        #     )
-        #     return
+        if not self.indi_info_updated:
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Not Yet Updated the Indi Info!',
+            )
+            return
 
         if self.USIndiGetBackup_cb.isChecked():
             self.origin.backup()

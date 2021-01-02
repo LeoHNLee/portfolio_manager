@@ -45,8 +45,8 @@ class SHI(Controller):
 
     def save(self, my_path:str=None):
         if my_path is None:
-            my_path = f'{cfg.PATH_DATA}origin.csv'
-        self.to_csv(index=False, encoding='cp949')
+            my_path = f'{cfg.PATH}{cfg.PATH_DATA[:-1]}\\origin.csv'
+        self.to_csv(my_path, index=False, encoding='cp949')
         log_save(my_path)
 
 
@@ -108,47 +108,39 @@ class SHI(Controller):
         cat = row['cat0']
         pos = row['position']
         bf_amt = row['current_amt']
-        diff = row['virtual_diff']
+        t_diff = row['target_diff']
+        v_diff = row['virtual_diff']
         pivot = row['pivot_val']
         cprice = row['current_val']
-        amt = self.order_amt(diff, cprice)
+        v_amt = self.order_amt(v_diff, cprice)
+        t_amt = self.order_amt(t_diff, cprice)
 
-        if cat=='CASH':
+        if cat!='US':
             pass
 
-        elif cat == 'KR':
-            if (diff < -pivot) or (diff > pivot):
-                return amt
-
         elif pos == 'neutral':
-            if diff < -pivot:
-                self.bid(ticker, amt)
-                self.after_order('BID', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
-            elif diff > pivot:
-                self.ask(ticker, amt)
-                self.after_order('ASK', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
+            if t_diff < -pivot:
+                self.bid(ticker, t_amt)
+                self.after_order('BID', ticker, t_amt, cprice, bf_amt, trans_tb)
+            elif t_diff > pivot:
+                self.ask(ticker, t_amt)
+                self.after_order('ASK', ticker, t_amt, cprice, bf_amt, trans_tb)
 
         elif pos == 'buy':
-            if diff < -pivot:
-                return amt
-            elif diff > pivot:
-                self.ask(ticker, amt)
-                self.after_order('ASK', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
+            if v_diff < -pivot:
+                log_order('ORDER', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
+                return v_amt
+            elif v_diff > pivot:
+                self.ask(ticker, v_amt)
+                self.after_order('ASK', ticker, v_amt, cprice, bf_amt, trans_tb)
 
         elif pos in ('sell', 'out'):
-            if diff < -pivot:
-                self.bid(ticker, amt)
-                self.after_order('BID', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
-            elif diff > pivot:
-                return amt
-        log_order(
-            'ORDER',
-            ticker,
-            self.usd,
-            exec_amt=amt,
-            pivot=pivot,
-            diff=diff,
-        )
+            if v_diff < -pivot:
+                self.bid(ticker, v_amt)
+                self.after_order('BID', ticker, v_amt, cprice, bf_amt, trans_tb)
+            elif v_diff > pivot:
+                log_order('ORDER', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
+                return v_amt
         return 0
 
 
@@ -172,7 +164,7 @@ class SHI(Controller):
         ui_ui.SendKeys('{Enter}')
 
 
-    def after_order(self, type, ticker, amt, cprice, bf_amt, avg_price, trans_tb=None):
+    def after_order(self, type, ticker, amt, cprice, bf_amt, trans_tb=None):
         if trans_tb is not None:
             tb_cntr.plus(trans_tb, 1)
 
@@ -182,14 +174,13 @@ class SHI(Controller):
 
         elif type=='ASK':
             self.usd += amt*cprice
-            gain = amt*(cprice-avg_price)
-            log_ask(ticker, self.usd, amt, cprice, bf_amt, gain)
+            log_ask(ticker, self.usd, amt, cprice, bf_amt)
 
 
     @staticmethod
     def order_amt(diff:float, cprice:int) -> int:
         diff = abs(diff)
-        if diff < cprice:
+        if (diff < cprice) or cprice==0:
             return 1
         else:
-            return diff // cprice
+            return int(diff // cprice)

@@ -21,7 +21,7 @@ def log(type, msg=None):
     ret = f'[{type}]'
     if msg is not None:
         ret += msg
-    logger.info(ret)
+    logger.warning(ret)
     print(ret)
 
 
@@ -33,14 +33,12 @@ def log_usd(type, usd, msg=None):
     log(type, ret)
 
 
-def log_order(type, ticker, usd, exec_amt=None, exec_price=None, bf_amt=None, gain=None, pivot=None, diff=None):
+def log_order(type, ticker, usd, exec_amt=None, exec_price=None, bf_amt=None, pivot=None, diff=None):
     msg = f'[Ticker:{ticker}]'
     if pivot and diff:
         msg += f'[ExecAmt:{exec_amt}][Pivot:{pivot}][Diff:{diff}]'
     if exec_amt and exec_price:
         msg += f'[ExecAmt:{exec_amt}][ExecPrice:{exec_price}][BeforeAmt:{bf_amt}]'
-    if gain:
-        msg += f'[Gain:{gain}]'
     log_usd(type, usd, msg)
 
 
@@ -55,7 +53,7 @@ def log_bid(ticker, usd, exec_amt, exec_price, bf_amt):
     )
 
 
-def log_ask(ticker, usd, exec_amt, exec_price, bf_amt, gain):
+def log_ask(ticker, usd, exec_amt, exec_price, bf_amt):
     log_order(
         type='ASK',
         ticker=ticker,
@@ -63,7 +61,6 @@ def log_ask(ticker, usd, exec_amt, exec_price, bf_amt, gain):
         exec_amt=exec_amt,
         exec_price=exec_price,
         bf_amt=bf_amt,
-        gain=gain,
     )
 
 

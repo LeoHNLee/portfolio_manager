@@ -68,7 +68,8 @@ class Controller(pd.DataFrame):
             self.usd = self.us_total - us_stock_total
         else:
             pass
-        self[self['name']=='USD']['current_val'] = self.usd
+        usd_idx = self[self['name']=='USD'].index[0]
+        self.loc[usd_idx, 'current_val'] = self.usd
         total = self['current_total'].sum()
         self['target_total'] = self['target_rate'] * total
         self['target_diff'] = self['target_total'] - self['current_total']
