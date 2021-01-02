@@ -1,4 +1,3 @@
-import asyncio
 import time
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -7,6 +6,7 @@ from uiautomation import uiautomation as ui_ui
 import pandas as pd
 
 from pm.config import cfg
+from pm.log import log, log_order, log_bid, log_ask, log_backup, log_save
 from pm.control import Controller
 from pm.control.casting import dt2str, fstr2int
 from pm.control.view import pbar_cntr, tb_cntr
@@ -31,9 +31,6 @@ class SHI(Controller):
     ASK_PRICE = ui.ButtonControl(searchDepth=7, Name='매수1', AutomationId='3782')
     ASK_BTN = ui.ButtonControl(searchDepth=7, Name='매도(팔자)', AutomationId='3809')
 
-    RT = ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779')
-    BTN_RT_KRW = ui.ButtonControl(searchDepth=5, Name='원화기준')
-
 
     @staticmethod
     def from_df(df):
@@ -46,54 +43,63 @@ class SHI(Controller):
         return SHI.from_df(df)
 
 
+    def save(self, my_path:str=None):
+        if my_path is None:
+            my_path = f'{cfg.PATH_DATA}origin.csv'
+        self.to_csv(index=False, encoding='cp949')
+        log_save(my_path)
+
+
     def backup(self, backup_path:str=None):
         if backup_path is None:
             backup_path = f'{cfg.PATH_DATA}backup/{dt2str(dt.now())}.csv'
-        self.to_csv(backup_path)
+        self.to_csv(backup_path, index=False, encoding='cp949')
+        log_backup(backup_path)
 
 
-    async def run(
-        self, start_time:dt=None, end_time:dt=None, backup=False,
+    def run(
+        self, start_time:dt=None, end_time:dt=None,
         pbar=None, iter_tb=None, trans_tb=None,
     ):
+        log('RUN_SHI_CONTROLLER')
         if start_time is None:
             start_time=dt.now()
         if end_time is None:
             end_time=start_time+td(minutes=1)
 
         while dt.now() < start_time:
-            await asyncio.sleep(60)
-
-        if backup:
-            self.backup()
+            log('WAIT UNTIL OPEN MARCKET')
+            time.sleep(60)
 
         while dt.now() < end_time:
             if pbar is not None:
-                pbar_cntr(pbar, start_time, end_time)
+                pbar_cntr.timer(pbar, start_time, end_time)
             if iter_tb is not None:
                 tb_cntr.plus(iter_tb, 1)
-            tmp_df = self.get_flow(SHI.rt, SHI.RT_SET_KRW)
+            tmp_df = self.get_flow()
             self.calculate(tmp_df=tmp_df)
             self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
-        self.backup()
+            self.save()
 
 
     @staticmethod
     def get_flow(
-        rt, 
-        RT_SET_KRW, 
-        path:str=cfg.PATH_DATA, 
-        fn:str='tmp.csv'
+        root_path:str=cfg.PATH,
+        dir_path:str=cfg.PATH_DATA, 
+        fn:str='tmp.csv',
     ):
-        file_path = path+fn
+        file_path = f'{root_path}{dir_path[:-1]}\\{fn}'
+        rt = ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779')
         rt.SetFocus()
-        RT_SET_KRW.Click()
+        ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
         rt.RightClick()
         ui.MenuItemControl(searchDepth=3, Name='엑셀로 내보내기').Click()
         ui.MenuItemControl(searchDepth=4, Name='CSV').Click()
         ui.EditControl(searchDepth=6, Name='파일 이름(N):').SendKeys(file_path+'{Enter}')
+        ui.ButtonControl(searchDepth=6, Name='예(Y)', AutomationId='CommandButton_6').Click()
         ret = SHI.read_csv(file_path, encoding='cp949')
         ret['현재가'] = ret['현재가'].apply(fstr2int)
+        log('GET_FLOW')
         return ret
 
 
@@ -101,38 +107,52 @@ class SHI(Controller):
         ticker = row['name']
         cat = row['cat0']
         pos = row['position']
+        bf_amt = row['current_amt']
         diff = row['virtual_diff']
         pivot = row['pivot_val']
-        cprice = row['currrent_val']
+        cprice = row['current_val']
         amt = self.order_amt(diff, cprice)
 
         if cat=='CASH':
             pass
 
-        elif (cat=='KR')\
-            or (pos == 'neutral'):
+        elif cat == 'KR':
+            if (diff < -pivot) or (diff > pivot):
+                return amt
+
+        elif pos == 'neutral':
             if diff < -pivot:
-                self.bid(ticker, amt, cprice, trans_tb)
+                self.bid(ticker, amt)
+                self.after_order('BID', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
             elif diff > pivot:
-                self.ask(ticker, amt, cprice, trans_tb)
+                self.ask(ticker, amt)
+                self.after_order('ASK', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
 
         elif pos == 'buy':
             if diff < -pivot:
                 return amt
             elif diff > pivot:
-                self.ask(ticker, amt, cprice, trans_tb)
+                self.ask(ticker, amt)
+                self.after_order('ASK', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
 
         elif pos in ('sell', 'out'):
             if diff < -pivot:
-                self.bid(ticker, amt, cprice, trans_tb)
+                self.bid(ticker, amt)
+                self.after_order('BID', ticker, amt, cprice, bf_amt, avg_price, trans_tb)
             elif diff > pivot:
                 return amt
+        log_order(
+            'ORDER',
+            ticker,
+            self.usd,
+            exec_amt=amt,
+            pivot=pivot,
+            diff=diff,
+        )
         return 0
 
 
-    def bid(self, ticker:str, amt:int, cprice:float, trans_tb=None):
-        if trans_tb is not None:
-            tb_cntr.plus(trans_tb, 1)
+    def bid(self, ticker:str, amt:int):
         self.MINI_ORDER.SetFocus()
         self.BID_TICKER.SendKeys(ticker+'{Enter}')
         self.BID_AMT.SendKeys(str(amt)+'{Enter}')
@@ -140,12 +160,9 @@ class SHI(Controller):
         self.BID_BTN.Click()
         ui_ui.SendKeys('{Enter}')
         ui_ui.SendKeys('{Enter}')
-        self.usd -= amt*cprice
 
 
-    def ask(self, ticker:str, amt:int, cprice:float, trans_tb=None):
-        if trans_tb is not None:
-            tb_cntr.plus(trans_tb, 1)
+    def ask(self, ticker:str, amt:int):
         self.ORDER.SetFocus()
         self.ASK_TICKER.SendKeys(ticker+'{Enter}')
         self.ASK_AMT.SendKeys(str(amt)+'{Enter}')
@@ -153,7 +170,20 @@ class SHI(Controller):
         self.ASK_BTN.Click()
         ui_ui.SendKeys('{Enter}')
         ui_ui.SendKeys('{Enter}')
-        self.usd += amt*cprice
+
+
+    def after_order(self, type, ticker, amt, cprice, bf_amt, avg_price, trans_tb=None):
+        if trans_tb is not None:
+            tb_cntr.plus(trans_tb, 1)
+
+        if type=='BID':
+            self.usd -= amt*cprice
+            log_bid(ticker, self.usd, amt, cprice, bf_amt)
+
+        elif type=='ASK':
+            self.usd += amt*cprice
+            gain = amt*(cprice-avg_price)
+            log_ask(ticker, self.usd, amt, cprice, bf_amt, gain)
 
 
     @staticmethod

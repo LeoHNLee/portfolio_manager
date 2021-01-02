@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from pm.log import log_usd
+
 
 class Controller(pd.DataFrame):
     def __init__(self, *args, **kwargs):
@@ -21,7 +23,9 @@ class Controller(pd.DataFrame):
 
 
     def calc_current_amt_indi(self, row, stock_acnt):
-        if row['cat0'] != 'KR':
+        if row['cat0'] == 'CASH':
+            return 1
+        elif row['cat0'] == 'US':
             return row['current_amt']
         ret = stock_acnt[stock_acnt['종목명']==row['name']]['결제일잔고수량']
         if ret.shape[0] == 0:
@@ -51,7 +55,7 @@ class Controller(pd.DataFrame):
 
 
     def calculate(self, tmp_df:pd.DataFrame):
-        self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df))
+        self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
         self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
         self['current_total'] = self.apply(self.calc_current_total, axis=1)
         self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
@@ -69,12 +73,13 @@ class Controller(pd.DataFrame):
         self['target_total'] = self['target_rate'] * total
         self['target_diff'] = self['target_total'] - self['current_total']
         self['virtual_diff'] = self['virtual_total'] + self['target_diff']
+        log_usd('CALCULATE', self.usd)
 
 
     def calc_current_amt(self, row, tmp_df:pd.DataFrame):
         if row['cat0'] != 'US':
             return row['current_amt']
-        ret = tmp_df[tmp_df['종목번호']==name]['주문가능']
+        ret = tmp_df[tmp_df['종목번호']==row['name']]['주문가능']
         if ret.shape[0] == 0:
             return 0
         return ret.values[0]

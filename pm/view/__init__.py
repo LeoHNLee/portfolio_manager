@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt, QDateTime, QTime
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
+from pm.log import log
 from pm.control.casting import dt2str, qtdt2dt
 from pm.control.indi.kr_info import IndiKRInfo
 from pm.control.shi import SHI
@@ -45,10 +46,11 @@ class PMWindow(QMainWindow, form_class):
             return
 
         self.USIndiGet_pbar.setValue(0)
+        if self.USIndiGetBackup_cb.isChecked():
+            self.origin.backup()
         self.indi_kr_info.req(
             origin=self.origin,
             pbar=self.USIndiGet_pbar,
-            backup=self.USIndiGetBackup_cb.isChecked(),
             status_tb=self.USCntrIndiStatus_tb,
         )
         self.indi_info_updated = True
@@ -57,7 +59,7 @@ class PMWindow(QMainWindow, form_class):
     def us_origin_file_load(self):
         dir_path = self.USOriginDir_tb.toPlainText()
         fn = self.USOriginFile_tb.toPlainText()
-        self.origin = SHI.read_csv(f'{dir_path}{fn}')
+        self.origin = SHI.read_csv(f'{dir_path}{fn}', encoding='cp949')
         self.USCntrOriginStatus_tb.setTextColor(QColor(0, 255, 0, 255))
         self.USCntrOriginStatus_tb.setPlainText('Origin File Loaded!!')
         self.USCntrOriginStatus_tb.setAlignment(Qt.AlignCenter)
@@ -65,6 +67,7 @@ class PMWindow(QMainWindow, form_class):
 
 
     def us_cntr_start(self):
+        log('PRESS_US_CNTR_START')
         if not self.origin_file_loaded:
             QMessageBox.warning(
                 self, 
@@ -73,23 +76,24 @@ class PMWindow(QMainWindow, form_class):
             )
             return
 
-        if not self.indi_info_updated:
-            QMessageBox.warning(
-                self, 
-                'Warning!', 
-                'Not Yet Updated the Indi Info!',
-            )
-            return
+        # if not self.indi_info_updated:
+        #     QMessageBox.warning(
+        #         self, 
+        #         'Warning!', 
+        #         'Not Yet Updated the Indi Info!',
+        #     )
+        #     return
+
+        if self.USIndiGetBackup_cb.isChecked():
+            self.origin.backup()
 
         start_time = qtdt2dt(self.USCntrStartTime_dt)
         end_time = qtdt2dt(self.USCntrEndTime_dt)
-        time.sleep(10)
-        asyncio.run(
-            self.origin.run(
-                start_time,
-                end_time,
-                self.USCntr_pbar,
-                self.USCntrIter_tb,
-                self.USCntrTrans_tb,
-            )
+        time.sleep(1)
+        self.origin.run(
+            start_time,
+            end_time,
+            pbar=self.USCntr_pbar,
+            iter_tb=self.USCntrIter_tb,
+            trans_tb=self.USCntrTrans_tb,
         )

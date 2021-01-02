@@ -2,16 +2,16 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 
 from pm.config import cfg
+from pm.log import log
 from pm.control.indi import IndiAPI
 from pm.control.casting import str2int, fstr2float
 from pm.control.view import pbar_cntr
 
 
 class IndiKRInfo(IndiAPI):
-    def req(self, origin=None, pbar=None, backup=False, status_tb=None):
+    def req(self, origin=None, pbar=None, status_tb=None):
         self.pbar = pbar
         self.origin = origin
-        self.backup = backup
         self.status_tb = status_tb
         return self.request(
             name='SABA655Q1',
@@ -48,6 +48,7 @@ class IndiKRInfo(IndiAPI):
             self.origin.set_total_acnt(ret)
         if self.pbar is not None:
             pbar_cntr.plus(self.pbar, 50)
+        log('INDI_TOTAL_ACNT')
         self.__req_stock__()
 
 
@@ -61,11 +62,11 @@ class IndiKRInfo(IndiAPI):
         ret['현재가'] = ret['현재가'].apply(fstr2float)
         if self.origin is not None:
             self.origin.set_stock_acnt(ret)
-        if self.backup:
-            self.origin.backup()
+            self.origin.save()
         if self.pbar is not None:
             pbar_cntr.plus(self.pbar, 50)
         if self.status_tb is not None:
             self.status_tb.setTextColor(QColor(0, 255, 0, 255))
             self.status_tb.setPlainText('Indi Info Updated!!')
             self.status_tb.setAlignment(Qt.AlignCenter)
+        log('INDI_STOCK_ACNT')
