@@ -27,7 +27,7 @@ class Controller(pd.DataFrame):
             return 1
         elif row['cat0'] == 'US':
             return row['current_amt']
-        ret = stock_acnt[stock_acnt['종목명']==row['name']]['결제일잔고수량']
+        ret = stock_acnt[stock_acnt['종목코드']==row['name']]['결제일잔고수량']
         if ret.shape[0] == 0:
             return 0
         return ret.values[0]
@@ -36,7 +36,7 @@ class Controller(pd.DataFrame):
     def calc_current_val_indi(self, row, stock_acnt):
         if row['cat0'] != 'KR':
             return row['current_val']
-        ret = stock_acnt[stock_acnt['종목명']==row['name']]['현재가']
+        ret = stock_acnt[stock_acnt['종목코드']==row['name']]['현재가']
         if ret.shape[0] == 0:
             return 0
         return ret.values[0]
@@ -70,6 +70,7 @@ class Controller(pd.DataFrame):
             pass
         usd_idx = self[self['name']=='USD'].index[0]
         self.loc[usd_idx, 'current_val'] = self.usd
+        self.loc[usd_idx, 'current_total'] = self.usd
         total = self['current_total'].sum()
         self['target_total'] = self['target_rate'] * total
         self['target_diff'] = self['target_total'] - self['current_total']

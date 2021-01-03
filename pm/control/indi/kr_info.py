@@ -54,6 +54,7 @@ class IndiKRInfo(IndiAPI):
 
     def rec_stock_acnt(self):
         ret = self.rec_multi_data({
+            '종목코드':0,
             '종목명':1,
             '결제일잔고수량':2,
             '현재가':5,
