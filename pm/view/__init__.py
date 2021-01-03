@@ -1,4 +1,3 @@
-import asyncio
 import time
 from datetime import datetime as dt
 
@@ -7,8 +6,9 @@ from PyQt5.QtCore import Qt, QDateTime, QTime
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
+from pm.config import cfg
 from pm.log import log
-from pm.control.casting import dt2str, qtdt2dt
+from pm.control.casting import dt2str, qtdt2dt, to_win_path
 from pm.control.indi.kr_info import IndiKRInfo
 from pm.control.shi import SHI
 
@@ -21,52 +21,52 @@ class PMWindow(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
 
-        self.USIndiGet_pb.clicked.connect(self.us_indi_get)
+        self.APIIndi_cb.stateChanged.connect(self.api_status_indi)
 
-        self.USSHIOpen_pb.clicked.connect(self.us_shi_open)
-        self.USSHIPopup_pb.clicked.connect(self.us_shi_popup)
-        self.USSHIQuit_pb.clicked.connect(self.us_shi_quit)
+        self.APISHIOpen_pb.clicked.connect(self.api_shi_open)
+        self.APISHIPopup_pb.clicked.connect(self.api_shi_popup)
+        self.APISHIQuit_pb.clicked.connect(self.api_shi_quit)
 
-        self.USOriginFileLoad_pb.clicked.connect(self.us_origin_file_load)
+        self.APIOriginLoad_pb.clicked.connect(self.api_origin_load)
+        self.APIOriginGet_pb.clicked.connect(self.api_origin_get)
 
+        self.USStart_pb.clicked.connect(self.us_cntr_start)
         start_dt = QDateTime.currentDateTime()
         start_dt.setTime(QTime(23, 30))
         end_dt = QDateTime.currentDateTime()
         end_dt.setTime(QTime(6, 0))
-        self.USCntrStartTime_dt.setDateTime(start_dt)
-        self.USCntrEndTime_dt.setDateTime(end_dt)
-        self.USCntrStart_pb.clicked.connect(self.us_cntr_start)
+        self.USStartTime_dt.setDateTime(start_dt)
+        self.USEndTime_dt.setDateTime(end_dt)
 
         self.indi_info_updated = False
         self.origin_file_loaded = False
         self.indi_kr_info = IndiKRInfo()
 
 
-    def us_indi_get(self):
-        if not self.origin_file_loaded:
-            QMessageBox.warning(
-                self, 
-                'Warning!', 
-                'Not Yet Loaded the Original File!',
-            )
-            return
+    def api_status_indi(self):
+        if self.APIIndi_cb.isChecked():
+            ok = self.indi_kr_info.login()
+            if not ok:
+                QMessageBox.warning(
+                    self, 
+                    'Warning!', 
+                    'Failed Open and Login SH Indi!',
+                )
+        else:
+            ok = self.indi_kr_info.quit()
+            if not ok:
+                QMessageBox.warning(
+                    self, 
+                    'Warning!', 
+                    'Failed Close SH Indi!',
+                )
 
-        self.USIndiGet_pbar.setValue(0)
-        if self.USIndiGetBackup_cb.isChecked():
-            self.origin.backup()
-        self.indi_kr_info.req(
-            origin=self.origin,
-            pbar=self.USIndiGet_pbar,
-            status_tb=self.USCntrIndiStatus_tb,
-        )
-        self.indi_info_updated = True
 
-
-    def us_shi_open(self):
+    def api_shi_open(self):
         SHI.open()
 
 
-    def us_shi_open(self):
+    def api_shi_popup(self):
         try:
             SHI.popup()
         except LookupError as e:
@@ -77,7 +77,7 @@ class PMWindow(QMainWindow, form_class):
             )
 
 
-    def us_shi_open(self):
+    def api_shi_quit(self):
         try:
             SHI.quit()
         except LookupError as e:
@@ -88,14 +88,28 @@ class PMWindow(QMainWindow, form_class):
             )
 
 
-    def us_origin_file_load(self):
-        dir_path = self.USOriginDir_tb.toPlainText()
-        fn = self.USOriginFile_tb.toPlainText()
-        self.origin = SHI.read_csv(f'{dir_path}{fn}', encoding='cp949')
-        self.USCntrOriginStatus_tb.setTextColor(QColor(0, 255, 0, 255))
-        self.USCntrOriginStatus_tb.setPlainText('Origin File Loaded!!')
-        self.USCntrOriginStatus_tb.setAlignment(Qt.AlignCenter)
+    def api_origin_load(self, _, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn='origin.csv'):
+        file_path = to_win_path(root_path, dir_path, fn)
+        self.origin = SHI.read_csv(file_path, encoding='cp949')
         self.origin_file_loaded = True
+
+
+    def api_origin_get(self):
+        if not self.origin_file_loaded:
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Not Yet Loaded the Original File!',
+            )
+            return
+
+        if self.APIBackup_cb.isChecked():
+            self.origin.backup()
+        self.indi_kr_info.req(
+            origin=self.origin,
+            status_cb=self.APIIndi_cb,
+        )
+        self.indi_info_updated = True
 
 
     def us_cntr_start(self):
@@ -116,16 +130,16 @@ class PMWindow(QMainWindow, form_class):
             )
             return
 
-        if self.USIndiGetBackup_cb.isChecked():
+        if self.APIBackup_cb.isChecked():
             self.origin.backup()
 
-        start_time = qtdt2dt(self.USCntrStartTime_dt)
-        end_time = qtdt2dt(self.USCntrEndTime_dt)
+        start_time = qtdt2dt(self.USStartTime_dt)
+        end_time = qtdt2dt(self.USEndTime_dt)
         time.sleep(1)
         self.origin.run(
             start_time,
             end_time,
-            pbar=self.USCntr_pbar,
-            iter_tb=self.USCntrIter_tb,
-            trans_tb=self.USCntrTrans_tb,
+            pbar=self.US_pbar,
+            iter_tb=self.USIter_tb,
+            trans_tb=self.USTrans_tb,
         )

@@ -9,10 +9,10 @@ from pm.control.view import pbar_cntr
 
 
 class IndiKRInfo(IndiAPI):
-    def req(self, origin=None, pbar=None, status_tb=None):
+    def req(self, origin=None, pbar=None, status_cb=None):
         self.pbar = pbar
         self.origin = origin
-        self.status_tb = status_tb
+        self.status_cb = status_cb
         return self.request(
             name='SABA655Q1',
             datas={
@@ -66,8 +66,4 @@ class IndiKRInfo(IndiAPI):
             self.origin.save()
         if self.pbar is not None:
             pbar_cntr.plus(self.pbar, 50)
-        if self.status_tb is not None:
-            self.status_tb.setTextColor(QColor(0, 255, 0, 255))
-            self.status_tb.setPlainText('Indi Info Updated!!')
-            self.status_tb.setAlignment(Qt.AlignCenter)
         log('INDI_STOCK_ACNT')

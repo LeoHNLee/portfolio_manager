@@ -33,3 +33,14 @@ def qtdt2dt(x):
         day=int(x[2]),
     )
     return ret
+
+
+def to_win_path(root_path=None, dir_path=None, fn=None):
+    ret = ''
+    if root_path is not None:
+        ret += root_path
+    if dir_path is not None:
+        ret += dir_path
+    if fn is not None:
+        ret += fn
+    return ret.replace('/', '\\')

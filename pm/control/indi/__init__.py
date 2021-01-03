@@ -18,6 +18,14 @@ class IndiAPI(object):
         }
 
 
+    def login(self, id:str=cfg.SH_ID, pw:str=cfg.SH_PW, cert_pw:str=cfg.CERT_PW, path:str=cfg.PATH_INDI):
+        return self.indi.StartIndi(id, pw, cert_pw, path)
+    
+    
+    def quit(self):
+        return self.indi.CloseIndi()
+
+
     def set_query_name(self, name:str) -> bool:
         return self.indi.dynamicCall("SetQueryName(QString)", name)
 

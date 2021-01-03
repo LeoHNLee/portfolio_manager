@@ -10,7 +10,7 @@ import numpy as np
 from pm.config import cfg
 from pm.log import dt2log, log, log_err, log_order, log_bid, log_ask, log_bid_fail, log_ask_fail, log_backup, log_save
 from pm.control import Controller
-from pm.control.casting import fstr2int
+from pm.control.casting import fstr2int, to_win_path
 from pm.control.view import pbar_cntr, tb_cntr
 
 
@@ -26,18 +26,16 @@ class SHI(Controller):
         return SHI.from_df(df)
 
 
-    def save(self, my_path:str=None):
-        if my_path is None:
-            my_path = f'{cfg.PATH}{cfg.PATH_DATA[:-1]}\\origin.csv'
-        self.to_csv(my_path, index=False, encoding='cp949')
-        log_save(my_path)
+    def save(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn=cfg.PATH_ORIGIN):
+        file_path = to_win_path(root_path, dir_path, fn)
+        self.to_csv(file_path, index=False, encoding='cp949')
+        log_save(file_path)
 
 
-    def backup(self, backup_path:str=None):
-        if backup_path is None:
-            backup_path = f'{cfg.PATH_DATA}backup/{dt2log(dt.now())}.csv'
-        self.to_csv(backup_path, index=False, encoding='cp949')
-        log_backup(backup_path)
+    def backup(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA):
+        file_path = to_win_path(root_path, dir_path, f'backup/{dt2log(dt.now())}.csv')
+        self.to_csv(file_path, index=False, encoding='cp949')
+        log_backup(file_path)
 
 
     @staticmethod
@@ -54,8 +52,11 @@ class SHI(Controller):
         menu.SendKeys('3805') # fr acnt
         time.sleep(0.5)
         menu.SendKeys('3754') # mini order
+        ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779').SetFocus()
+        ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
         ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)').SetFocus()
         ui.ButtonControl(searchDepth=4, Name='미국', AutomationId='3775').Click()
+        ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
 
 
     @staticmethod
@@ -106,14 +107,13 @@ class SHI(Controller):
 
     @staticmethod
     def get_flow(
-        root_path:str=cfg.PATH,
+        root_path:str=cfg.PATH_ROOT,
         dir_path:str=cfg.PATH_DATA, 
         fn:str='tmp.csv',
     ):
-        file_path = f'{root_path}{dir_path[:-1]}\\{fn}'
+        file_path = to_win_path(root_path, dir_path, fn)
         rt = ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779')
         rt.SetFocus()
-        ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
         rt.RightClick()
         ui.MenuItemControl(searchDepth=3, Name='엑셀로 내보내기').Click()
         ui.MenuItemControl(searchDepth=4, Name='CSV').Click()
