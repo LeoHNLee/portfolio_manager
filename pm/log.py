@@ -1,4 +1,4 @@
-import datetime as dt
+from datetime import datetime as dt
 import locale
 locale.setlocale(locale.LC_MONETARY, 'en_US')
 
@@ -7,7 +7,11 @@ import logging
 from pm.config import cfg
 
 
-now = dt.datetime.now().strftime('%Y-%m-%d_%H')
+def dt2log(x):
+    return x.strftime('%Y-%m-%d_%H%M%S')
+
+
+now = dt2log(dt.now())
 log_formatter = logging.Formatter('[%(levelname)s][%(asctime)s]%(message)s')
 file_handler = logging.FileHandler(filename=f'{cfg.PATH_LOG}{now}.log')
 file_handler.setFormatter(log_formatter)
@@ -25,6 +29,11 @@ def log(type, msg=None):
     print(ret)
 
 
+def log_err(type, msg):
+    logger.error(f'[{type}][ErrorMsg:{msg}]')
+    print(ret)
+
+
 def log_usd(type, usd, msg=None):
     usd = locale.currency(usd, symbol=False, grouping=True)
     ret = f'[USD:{usd}]'
@@ -34,11 +43,7 @@ def log_usd(type, usd, msg=None):
 
 
 def log_order(type, ticker, usd, exec_amt=None, exec_price=None, bf_amt=None, pivot=None, diff=None):
-    msg = f'[Ticker:{ticker}]'
-    if pivot and diff:
-        msg += f'[ExecAmt:{exec_amt}][Pivot:{pivot}][Diff:{diff}]'
-    if exec_amt and exec_price:
-        msg += f'[ExecAmt:{exec_amt}][ExecPrice:{exec_price}][BeforeAmt:{bf_amt}]'
+    msg = f'[Ticker:{ticker}][ExecAmt:{exec_amt}][ExecPrice:{exec_price}][BeforeAmt:{bf_amt}][Pivot:{pivot}][Diff:{diff}]'
     log_usd(type, usd, msg)
 
 
@@ -60,6 +65,25 @@ def log_ask(ticker, usd, exec_amt, exec_price, bf_amt):
         usd=usd,
         exec_amt=exec_amt,
         exec_price=exec_price,
+        bf_amt=bf_amt,
+    )
+
+
+def log_bid_fail(ticker, usd, exec_price):
+    log_order(
+        type='BID_FAIL',
+        ticker=ticker,
+        usd=usd,
+        exec_price=exec_price,
+    )
+
+
+def log_ask_fail(ticker, usd, exec_amt, bf_amt):
+    log_order(
+        type='ASK_FAIL',
+        ticker=ticker,
+        usd=usd,
+        exec_amt=exec_amt,
         bf_amt=bf_amt,
     )
 
