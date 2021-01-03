@@ -1,4 +1,5 @@
 import time
+import subprocess
 from datetime import datetime as dt
 from datetime import timedelta as td
 import uiautomation as ui
@@ -37,6 +38,34 @@ class SHI(Controller):
             backup_path = f'{cfg.PATH_DATA}backup/{dt2log(dt.now())}.csv'
         self.to_csv(backup_path, index=False, encoding='cp949')
         log_backup(backup_path)
+
+
+    @staticmethod
+    def open(path:str=cfg.PATH_SHI):
+        subprocess.Popen(path)
+
+
+    @staticmethod
+    def popup():
+        menu = ui.EditControl(searchDepth=6, AutomationId='1001')
+        menu.SetFocus()
+        menu.SendKeys('3651') # order
+        time.sleep(0.5)
+        menu.SendKeys('3805') # fr acnt
+        time.sleep(0.5)
+        menu.SendKeys('3754') # mini order
+        ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)').SetFocus()
+        ui.ButtonControl(searchDepth=4, Name='미국', AutomationId='3775').Click()
+
+
+    @staticmethod
+    def quit():
+        quit = ui.ButtonControl(searchDepth=4, AutomationId='1358')
+        quit.SetFocus()
+        quit.Click()
+        ok = ui.ButtonControl(searchDepth=4, Name='신한아이 종료', AutomationId='3787')
+        ok.SetFocus()
+        ok.Click()
 
 
     def run(

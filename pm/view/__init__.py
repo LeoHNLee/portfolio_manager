@@ -20,9 +20,14 @@ class PMWindow(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+
         self.USIndiGet_pb.clicked.connect(self.us_indi_get)
+
+        self.USSHIOpen_pb.clicked.connect(self.us_shi_open)
+        self.USSHIPopup_pb.clicked.connect(self.us_shi_popup)
+        self.USSHIQuit_pb.clicked.connect(self.us_shi_quit)
+
         self.USOriginFileLoad_pb.clicked.connect(self.us_origin_file_load)
-        self.USCntrStart_pb.clicked.connect(self.us_cntr_start)
 
         start_dt = QDateTime.currentDateTime()
         start_dt.setTime(QTime(23, 30))
@@ -30,6 +35,7 @@ class PMWindow(QMainWindow, form_class):
         end_dt.setTime(QTime(6, 0))
         self.USCntrStartTime_dt.setDateTime(start_dt)
         self.USCntrEndTime_dt.setDateTime(end_dt)
+        self.USCntrStart_pb.clicked.connect(self.us_cntr_start)
 
         self.indi_info_updated = False
         self.origin_file_loaded = False
@@ -54,6 +60,32 @@ class PMWindow(QMainWindow, form_class):
             status_tb=self.USCntrIndiStatus_tb,
         )
         self.indi_info_updated = True
+
+
+    def us_shi_open(self):
+        SHI.open()
+
+
+    def us_shi_open(self):
+        try:
+            SHI.popup()
+        except LookupError as e:
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Not Open the SHI!',
+            )
+
+
+    def us_shi_open(self):
+        try:
+            SHI.quit()
+        except LookupError as e:
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Not Open the SHI!',
+            )
 
 
     def us_origin_file_load(self):
