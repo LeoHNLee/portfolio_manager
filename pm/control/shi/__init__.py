@@ -218,13 +218,13 @@ class SHI(Controller):
 
     def adjust_pos(self, row):
         if (row['position'] in ('buy', 'sell'))\
-            and (row['virtual_amt']==0):
+            and (row['virtual_amt']<1):
             return 'neutral'
         return row['position']
 
 
     def adjust_threshold(self, row):
         if (row['position'] in ('buy', 'sell'))\
-            and (row['virtual_amt']==0):
+            and (row['virtual_amt']<1):
             return 0.8
         return row['pivot_rate']
