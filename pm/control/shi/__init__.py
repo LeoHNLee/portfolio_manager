@@ -104,6 +104,7 @@ class SHI(Controller):
             self.calculate(tmp_df=tmp_df)
             self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
             self['position'] = self.apply(self.adjust_pos, axis=1)
+            self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
             self.save()
 
 
@@ -165,8 +166,8 @@ class SHI(Controller):
 
 
     def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb):
-        if self.usd < cprice*2:
-            return log_bid_fail(ticker, self.usd, cprice)
+        # if self.usd < cprice*2:
+        #     return log_bid_fail(ticker, self.usd, cprice)
 
         try:
             ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
@@ -220,3 +221,10 @@ class SHI(Controller):
             and (row['virtual_amt']==0):
             return 'neutral'
         return row['position']
+
+
+    def adjust_threshold(self, row):
+        if (row['position'] in ('buy', 'sell'))\
+            and (row['virtual_amt']==0):
+            return 0.8
+        return row['pivot_rate']
