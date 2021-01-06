@@ -117,6 +117,7 @@ class SHI(Controller):
         file_path = to_win_path(root_path, dir_path, fn)
         rt = ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779')
         rt.SetFocus()
+        ui.ButtonControl(searchDepth=4, Name='조 회', AutomationId='3813').Click()
         rt.RightClick()
         ui.MenuItemControl(searchDepth=3, Name='엑셀로 내보내기').Click()
         ui.MenuItemControl(searchDepth=4, Name='CSV').Click()
