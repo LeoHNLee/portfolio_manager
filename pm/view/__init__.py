@@ -64,6 +64,7 @@ class PMWindow(QMainWindow, form_class):
 
     def api_shi_open(self):
         SHI.open()
+        log('SHI_OPEN')
 
 
     def api_shi_popup(self):
@@ -75,6 +76,7 @@ class PMWindow(QMainWindow, form_class):
                 'Warning!', 
                 'Not Open the SHI!',
             )
+        log('SHI_POPUP')
 
 
     def api_shi_quit(self):
@@ -86,12 +88,14 @@ class PMWindow(QMainWindow, form_class):
                 'Warning!', 
                 'Not Open the SHI!',
             )
+        log('SHI_QUIT')
 
 
     def api_origin_load(self, _, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn='origin.csv'):
         file_path = to_win_path(root_path, dir_path, fn)
         self.origin = SHI.read_csv(file_path, encoding='cp949')
         self.origin_file_loaded = True
+        log('ORIGIN_LOAD')
 
 
     def api_origin_get(self):
@@ -110,6 +114,8 @@ class PMWindow(QMainWindow, form_class):
             status_cb=self.APIIndi_cb,
         )
         self.indi_info_updated = True
+        self.origin.save()
+        log('ORIGIN_GET')
 
 
     def us_cntr_start(self):

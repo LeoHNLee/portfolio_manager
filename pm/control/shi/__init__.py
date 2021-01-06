@@ -47,11 +47,13 @@ class SHI(Controller):
     def popup():
         menu = ui.EditControl(searchDepth=6, AutomationId='1001')
         menu.SetFocus()
+        time.sleep(1)
         menu.SendKeys('3651') # order
-        time.sleep(0.5)
+        time.sleep(1)
         menu.SendKeys('3805') # fr acnt
-        time.sleep(0.5)
+        time.sleep(1)
         menu.SendKeys('3754') # mini order
+        time.sleep(1)
         ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779').SetFocus()
         ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
         ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)').SetFocus()
@@ -169,7 +171,7 @@ class SHI(Controller):
         try:
             ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
             ui.EditControl(searchDepth=5, AutomationId='3810').SendKeys(ticker+'{Enter}')
-            time.sleep(0.5)
+            time.sleep(1)
             ui.EditControl(searchDepth=5, AutomationId='3809').SendKeys(str(amt)+'{Enter}')
             ui.ButtonControl(searchDepth=5, Name='매도1', AutomationId='3782').Click()
             ui.ButtonControl(searchDepth=5, Name='매수', AutomationId='3807').Click()
@@ -190,7 +192,7 @@ class SHI(Controller):
         try:
             ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)').SetFocus()
             ui.EditControl(searchDepth=7, AutomationId='3812').SendKeys(ticker+'{Enter}')
-            time.sleep(0.5)
+            time.sleep(1)
             ui.EditControl(searchDepth=7, AutomationId='3811').SendKeys(str(amt)+'{Enter}')
             ui.ButtonControl(searchDepth=7, Name='매수1', AutomationId='3782').Click()
             ui.ButtonControl(searchDepth=7, Name='매도(팔자)', AutomationId='3809').Click()
