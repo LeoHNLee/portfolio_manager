@@ -29,7 +29,7 @@ class Controller(pd.DataFrame):
             return row['current_amt']
         ret = stock_acnt[stock_acnt['종목코드']==row['name']]['결제일잔고수량']
         if ret.shape[0] == 0:
-            return 0
+            return row['current_amt']
         return ret.values[0]
 
 
@@ -38,7 +38,7 @@ class Controller(pd.DataFrame):
             return row['current_val']
         ret = stock_acnt[stock_acnt['종목코드']==row['name']]['현재가']
         if ret.shape[0] == 0:
-            return 0
+            return row['current_val']
         return ret.values[0]
 
 
@@ -83,7 +83,7 @@ class Controller(pd.DataFrame):
             return row['current_amt']
         ret = tmp_df[tmp_df['종목번호']==row['name']]['주문가능']
         if ret.shape[0] == 0:
-            return 0
+            return row['current_amt']
         return ret.values[0]
 
 
@@ -92,7 +92,7 @@ class Controller(pd.DataFrame):
             return row['current_val']
         ret = tmp_df[tmp_df['종목번호']==row['name']]['현재가']
         if ret.shape[0] == 0:
-            return 0
+            return row['current_amt']
         return ret.values[0]
 
 
