@@ -5,28 +5,28 @@ import pandas as pd
 import numpy as np
 
 from pm.config import cfg
-from pm.log import dt2log, log, log_err, log_order, log_bid, log_ask, log_bid_fail, log_ask_fail, log_backup, log_save
+from pm.log import dt2log, log, log_err, log_bid_kr, log_ask_kr, log_bid_kr_fail, log_ask_kr_fail, log_backup, log_save
 from pm.control import Controller
-from pm.control.indi.kr_market import IndiKRMarket
-from pm.control.indi.kr_info import IndiKRInfo
+from pm.control.indi import IndiAPI
 from pm.control.casting import fstr2int, to_win_path, str2int
 from pm.control.view import pbar_cntr, tb_cntr
 
 
-class KoCntr(Controller, IndiAPI):
+class KRCntr(Controller, IndiAPI):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.trans = {}
 
 
     @staticmethod
     def from_df(df):
-        return KoCntr(df.values, columns=df.columns, index=df.index)
+        return KRCntr(df.values, columns=df.columns, index=df.index)
 
 
     @staticmethod
     def read_csv(*args, **kwargs):
         df = pd.read_csv(*args, **kwargs)
-        return KoCntr.from_df(df)
+        return KRCntr.from_df(df)
 
 
     def run(
@@ -134,12 +134,54 @@ class KoCntr(Controller, IndiAPI):
         log('CALCULATE')
 
 
-    def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb):
+    def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb=None):
         if self.usd < cprice*2:
             return log_bid_fail(ticker, self.usd, cprice)
 
-        log_bid(ticker, self.usd, amt, cprice, bf_amt)
-        tb_cntr.plus(trans_tb, amt)
+        req_id = self.request(
+            name='SABA101U1',
+            datas={
+                0: cfg.ACNT_NO, # 계좌번호 11자리
+                1: '01', # 상품구분
+                2: cfg.ACNT_PW, # 계좌비밀번호
+                6: '00', # 신용거래구구분
+                7: '2', # 매도매수구분
+                8: ticker, # 종목코드
+                9: str(amt), # 주문수량
+                10: str(cprice), # 주문가격
+                11: '1', # 정규시간외구분코드
+                12: 'X', # 호가유형코드
+                13: 'IOC', # 주문조건코드
+                14: '0', # 신용대출통합구분코드
+                21: 'Y', # 결과메세지처리여부
+            },
+        )
+        self.trans[req_id] = {
+            'ticker':ticker,
+            'amt':amt,
+            'cprice':cprice,
+        }
+
+
+    def rec_bid(self, req_id):
+        ret = self.rec_single_data({
+            'order_id':0, # 에러시 0
+            'total_val':3,
+            'cost':4,
+            'tax':5, # 매도시 가계산제세금 | 매수 에러시 주문가능금액
+        })
+        inputs = self.trans[req_id]
+        if ret.loc[0, 'order_id'] == '0':
+            log_bid_kr_fail(
+                inputs['ticker'], inputs['amt'], inputs['cprice'],
+                ret.loc[0, 'order_id'], ret.loc[0, 'total_val'], ret.loc[0, 'cost'],
+            )
+        else:
+            log_bid_kr(
+                inputs['ticker'], inputs['amt'], inputs['cprice'],
+                ret.loc[0, 'order_id'], ret.loc[0, 'total_val'], ret.loc[0, 'cost'],
+            )
+        del self.trans[req_id]
 
 
     def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int, trans_tb):
@@ -148,3 +190,42 @@ class KoCntr(Controller, IndiAPI):
 
         log_ask(ticker, self.usd, amt, cprice, bf_amt)
         tb_cntr.plus(trans_tb, amt)
+        return self.request(
+            name='SABA101U1',
+            datas={
+                0: cfg.ACNT_NO, # 계좌번호 11자리
+                1: '01', # 상품구분
+                2: cfg.ACNT_PW, # 계좌비밀번호
+                6: '00', # 신용거래구구분
+                7: '1', # 매도매수구분
+                8: ticker, # 종목코드
+                9: str(amt), # 주문수량
+                10: str(cprice), # 주문가격
+                11: '1', # 정규시간외구분코드
+                12: 'X', # 호가유형코드
+                13: 'IOC', # 주문조건코드
+                14: '0', # 신용대출통합구분코드
+                21: 'Y', # 결과메세지처리여부
+            },
+        )
+
+
+    def rec_ask(self, req_id):
+        ret = self.rec_single_data({
+            'order_id':0, # 에러시 0
+            'total_val':3,
+            'cost':4,
+            'tax':5, # 매도시 가계산제세금 | 매수 에러시 주문가능금액
+        })
+        inputs = self.trans[req_id]
+        if ret.loc[0, 'order_id'] == '0':
+            log_ask_kr_fail(
+                inputs['ticker'], inputs['amt'], inputs['cprice'],
+                ret.loc[0, 'order_id'], ret.loc[0, 'total_val'], ret.loc[0, 'cost'], ret.loc[0, 'tax'],
+            )
+        else:
+            log_ask_kr(
+                inputs['ticker'], inputs['amt'], inputs['cprice'],
+                ret.loc[0, 'order_id'], ret.loc[0, 'total_val'], ret.loc[0, 'cost'], ret.loc[0, 'tax'],
+            )
+        del self.trans[req_id]

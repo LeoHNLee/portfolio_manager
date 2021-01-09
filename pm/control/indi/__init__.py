@@ -99,5 +99,8 @@ class IndiAPI(object):
         return ret
 
 
-    def recieve_sys_msg(self, msg_id):
-        print("System Message Received = ", msg_id)
+    def recieve_sys_msg(self, msg_id:int):
+        if msg_id == 10:
+            log('Quit Indi')
+        elif msg_id == 11:
+            log('Start Indi')
