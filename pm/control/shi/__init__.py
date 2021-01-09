@@ -109,9 +109,9 @@ class SHI(Controller):
                 else:
                     break
             self.calculate(tmp_df=tmp_df)
-            self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
             self['position'] = self.apply(self.adjust_pos, axis=1)
             self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
+            self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
             self.save()
 
 
@@ -176,6 +176,10 @@ class SHI(Controller):
             elif v_diff > pivot:
                 log_order('VIRTUAL_BID', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
                 return v_amt
+
+        elif pos == 'in':
+            self.bid(ticker, 1, 0, 0, trans_tb)
+
         return 0
 
 
@@ -241,14 +245,21 @@ class SHI(Controller):
 
 
     def adjust_pos(self, row):
-        if (row['position'] in ('buy', 'sell'))\
-            and (row['virtual_amt']<1):
+        if (
+            row['position'] != 'neutral'
+            and row['virtual_amt']<1
+        ):
             return 'neutral'
+        elif (
+            row['position'] == 'in'
+            and row['current_amt'] > 0
+        ):
+            return 'buy'
         return row['position']
 
 
     def adjust_threshold(self, row):
-        if (row['position'] in ('buy', 'sell'))\
-            and (row['virtual_amt']<1):
+        if (row['position'] == 'neutral')\
+            and (row['pivot_rate'] < 0.8):
             return 0.8
         return row['pivot_rate']
