@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from pm.log import log_usd
+from pm.log import log_save, log_backup, log_usd, log_order
 
 
 class Controller(pd.DataFrame):
@@ -20,6 +20,18 @@ class Controller(pd.DataFrame):
     def read_csv(*args, **kwargs):
         df = pd.read_csv(*args, **kwargs)
         return self.from_df(df)
+
+
+    def save(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn=cfg.PATH_ORIGIN):
+        file_path = to_win_path(root_path, dir_path, fn)
+        self.to_csv(file_path, index=False, encoding='cp949')
+        log_save(file_path)
+
+
+    def backup(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA):
+        file_path = to_win_path(root_path, dir_path, f'backup/{dt2log(dt.now())}.csv')
+        self.to_csv(file_path, index=False, encoding='cp949')
+        log_backup(file_path)
 
 
     def calc_current_amt_indi(self, row, stock_acnt):
@@ -54,28 +66,8 @@ class Controller(pd.DataFrame):
         self['current_val'] = self.apply(lambda x: self.calc_current_val_indi(x, stock_acnt), axis=1)
 
 
-    def calculate(self, tmp_df:pd.DataFrame):
-        self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
-        self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
-        self['current_total'] = self.apply(self.calc_current_total, axis=1)
-        self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
-        self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)
-
-        if self.usd >= 0:
-            pass
-        elif self.us_total >= 0:
-            us_stock_total = self[self['cat0']=='US']['current_total'].sum()
-            self.usd = self.us_total - us_stock_total
-        else:
-            pass
-        usd_idx = self[self['name']=='USD'].index[0]
-        self.loc[usd_idx, 'current_val'] = self.usd
-        self.loc[usd_idx, 'current_total'] = self.usd
-        total = self['current_total'].sum()
-        self['target_total'] = self['target_rate'] * total
-        self['target_diff'] = self['target_total'] - self['current_total']
-        self['virtual_diff'] = self['virtual_total'] + self['target_diff']
-        log_usd('CALCULATE', self.usd)
+    def calculate(self, *args, **kwargs):
+        raise NotImplementedError('calculate')
 
 
     def calc_current_amt(self, row, tmp_df:pd.DataFrame):
@@ -96,10 +88,6 @@ class Controller(pd.DataFrame):
         return ret.values[0]
 
 
-    def calc_current_total(self, row):
-        return row['current_amt'] * row['current_val']
-
-
     def calc_virtual_total(self, row):
         if row['position'] == 'out':
             return row['virtual_amt'] * row['virtual_val']
@@ -118,3 +106,81 @@ class Controller(pd.DataFrame):
             return many
         else:
             return normal
+
+
+    def order(self, row, trans_tb=None) -> int:
+        ticker = row['name']
+        cat = row['cat0']
+        pos = row['position']
+        bf_amt = row['current_amt']
+        t_diff = row['target_diff']
+        v_diff = row['virtual_diff']
+        pivot = row['pivot_val']
+        cprice = row['current_val']
+        v_amt = self.order_amt(v_diff, cprice)
+        t_amt = self.order_amt(t_diff, cprice)
+
+        if cat!='US':
+            pass
+
+        elif pos == 'neutral':
+            if t_diff < -pivot:
+                self.ask(ticker, t_amt, cprice, bf_amt, trans_tb)
+            elif t_diff > pivot:
+                self.bid(ticker, t_amt, cprice, bf_amt, trans_tb)
+
+        elif pos == 'buy':
+            if v_diff < -pivot:
+                log_order('VIRTUAL_ASK', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
+                return v_amt
+            elif v_diff > pivot:
+                self.bid(ticker, v_amt, cprice, bf_amt, trans_tb)
+
+        elif pos in ('sell', 'out'):
+            if v_diff < -pivot:
+                self.ask(ticker, v_amt, cprice, bf_amt, trans_tb)
+            elif v_diff > pivot:
+                log_order('VIRTUAL_BID', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
+                return v_amt
+
+        elif pos == 'in':
+            self.bid(ticker, 1, 0, 0, trans_tb)
+
+        return 0
+
+
+    def bid(self, *args, **kwargs):
+        raise NotImplementedError('bid')
+
+
+    def ask(self, *args, **kwargs):
+        raise NotImplementedError('ask')
+
+
+    def order_amt(self, diff:float, cprice:int) -> int:
+        diff = abs(diff)
+        if (cprice==0) or (np.isnan(diff)) or (diff < cprice):
+            return 1
+        else:
+            return int(diff // cprice)
+
+
+    def adjust_pos(self, row):
+        if (
+            row['position'] != 'neutral'
+            and row['virtual_amt']<1
+        ):
+            return 'neutral'
+        elif (
+            row['position'] == 'in'
+            and row['current_amt'] > 0
+        ):
+            return 'buy'
+        return row['position']
+
+
+    def adjust_threshold(self, row):
+        if (row['position'] == 'neutral')\
+            and (row['pivot_rate'] < 0.8):
+            return 0.8
+        return row['pivot_rate']
