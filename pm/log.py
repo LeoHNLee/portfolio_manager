@@ -30,7 +30,8 @@ def log(type, msg=None):
 
 
 def log_err(type, msg):
-    logger.error(f'[{type}][ErrorMsg:{msg}]')
+    ret = f'[{type}][ErrorMsg:{msg}]'
+    logger.error(ret)
     print(ret)
 
 
