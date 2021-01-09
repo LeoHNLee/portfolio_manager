@@ -1,5 +1,6 @@
 import time
 from datetime import datetime as dt
+from _ctypes import COMError
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, QDateTime, QTime
@@ -7,7 +8,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 from pm.config import cfg
-from pm.log import log
+from pm.log import log, log_err
 from pm.control.casting import dt2str, qtdt2dt, to_win_path
 from pm.control.indi.kr_info import IndiKRInfo
 from pm.control.shi import SHI
@@ -70,7 +71,7 @@ class PMWindow(QMainWindow, form_class):
     def api_shi_popup(self):
         try:
             SHI.popup()
-        except LookupError as e:
+        except (LookupError, COMError) as e:
             QMessageBox.warning(
                 self, 
                 'Warning!', 
@@ -82,7 +83,7 @@ class PMWindow(QMainWindow, form_class):
     def api_shi_quit(self):
         try:
             SHI.quit()
-        except LookupError as e:
+        except (LookupError, COMError) as e:
             QMessageBox.warning(
                 self, 
                 'Warning!', 
@@ -142,10 +143,20 @@ class PMWindow(QMainWindow, form_class):
         start_time = qtdt2dt(self.USStartTime_dt)
         end_time = qtdt2dt(self.USEndTime_dt)
         time.sleep(1)
-        self.origin.run(
-            start_time,
-            end_time,
-            pbar=self.US_pbar,
-            iter_tb=self.USIter_tb,
-            trans_tb=self.USTrans_tb,
-        )
+        try:
+            self.origin.run(
+                start_time,
+                end_time,
+                pbar=self.US_pbar,
+                iter_tb=self.USIter_tb,
+                trans_tb=self.USTrans_tb,
+            )
+        except (LookupError, COMError) as e:
+            log_err('LookupError', e)
+            QMessageBox.warning(
+                self, 
+                'Error!', 
+                f'''LookupError!
+                >>>{e}<<<''',
+            )
+        log('US_CNTR_END')

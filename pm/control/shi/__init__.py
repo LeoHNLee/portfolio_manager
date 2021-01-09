@@ -4,6 +4,7 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 import uiautomation as ui
 from uiautomation import uiautomation as ui_ui
+from _ctypes import COMError
 import pandas as pd
 import numpy as np
 
@@ -55,9 +56,13 @@ class SHI(Controller):
         menu.SendKeys('3754') # mini order
         time.sleep(1)
         ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779').SetFocus()
+        time.sleep(1)
         ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
+        time.sleep(1)
         ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)').SetFocus()
+        time.sleep(1)
         ui.ButtonControl(searchDepth=4, Name='미국', AutomationId='3775').Click()
+        time.sleep(1)
         ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
 
 
@@ -94,11 +99,13 @@ class SHI(Controller):
             while n_try < 10:
                 try:
                     tmp_df = self.get_flow()
-                except LookupError as e:
+                except (LookupError, COMError) as e:
                     n_try += 1
                     log_err('LooupError', e)
                     if n_try >= 10:
                         raise LookupError(str(e))
+                    ui_ui.SendKeys('{Escape}')
+                    ui_ui.SendKeys('{Enter}')
                 else:
                     break
             self.calculate(tmp_df=tmp_df)
@@ -117,11 +124,17 @@ class SHI(Controller):
         file_path = to_win_path(root_path, dir_path, fn)
         rt = ui.PaneControl(searchDepth=5, ClassName='GXWND', AutomationId='3779')
         rt.SetFocus()
+        time.sleep(1)
         ui.ButtonControl(searchDepth=4, Name='조 회', AutomationId='3813').Click()
+        time.sleep(1)
         rt.RightClick()
+        time.sleep(1)
         ui.MenuItemControl(searchDepth=3, Name='엑셀로 내보내기').Click()
+        time.sleep(1)
         ui.MenuItemControl(searchDepth=4, Name='CSV').Click()
+        time.sleep(1)
         ui.EditControl(searchDepth=6, Name='파일 이름(N):').SendKeys(file_path+'{Enter}')
+        time.sleep(1)
         ui.ButtonControl(searchDepth=6, Name='예(Y)', AutomationId='CommandButton_6').Click()
         ret = SHI.read_csv(file_path, encoding='cp949')
         ret['현재가'] = ret['현재가'].apply(fstr2int)
@@ -167,24 +180,29 @@ class SHI(Controller):
 
 
     def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb):
-        # if self.usd < cprice*2:
-        #     return log_bid_fail(ticker, self.usd, cprice)
+        if self.usd < cprice*2:
+            return log_bid_fail(ticker, self.usd, cprice)
 
         try:
             ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
+            time.sleep(1)
             ui.EditControl(searchDepth=5, AutomationId='3810').SendKeys(ticker+'{Enter}')
             time.sleep(1)
             ui.EditControl(searchDepth=5, AutomationId='3809').SendKeys(str(amt)+'{Enter}')
+            time.sleep(1)
             ui.ButtonControl(searchDepth=5, Name='매도1', AutomationId='3782').Click()
+            time.sleep(1)
             ui.ButtonControl(searchDepth=5, Name='매수', AutomationId='3807').Click()
+            time.sleep(1)
             ui_ui.SendKeys('{Enter}')
+            time.sleep(1)
             ui_ui.SendKeys('{Enter}')
-        except LookupError as e:
+        except (LookupError, COMError) as e:
             log_bid_fail(ticker, self.usd, cprice)
         else:
             self.usd -= amt*cprice
             log_bid(ticker, self.usd, amt, cprice, bf_amt)
-            tb_cntr.plus(trans_tb, 1)
+            tb_cntr.plus(trans_tb, amt)
 
 
     def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int, trans_tb):
@@ -193,19 +211,24 @@ class SHI(Controller):
 
         try:
             ui.WindowControl(searchDepth=2, Name='(3651)주식주문(미국/홍콩/후강퉁/선강퉁)').SetFocus()
+            time.sleep(1)
             ui.EditControl(searchDepth=7, AutomationId='3812').SendKeys(ticker+'{Enter}')
             time.sleep(1)
             ui.EditControl(searchDepth=7, AutomationId='3811').SendKeys(str(amt)+'{Enter}')
+            time.sleep(1)
             ui.ButtonControl(searchDepth=7, Name='매수1', AutomationId='3782').Click()
+            time.sleep(1)
             ui.ButtonControl(searchDepth=7, Name='매도(팔자)', AutomationId='3809').Click()
+            time.sleep(1)
             ui_ui.SendKeys('{Enter}')
+            time.sleep(1)
             ui_ui.SendKeys('{Enter}')
-        except LookupError as e:
+        except (LookupError, COMError) as e:
             log_ask_fail(ticker, self.usd, amt, bf_amt)
         else:
             self.usd += amt*cprice
             log_ask(ticker, self.usd, amt, cprice, bf_amt)
-            tb_cntr.plus(trans_tb, 1)
+            tb_cntr.plus(trans_tb, amt)
 
 
     @staticmethod
