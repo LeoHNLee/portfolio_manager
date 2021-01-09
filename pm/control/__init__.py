@@ -59,7 +59,7 @@ class Controller(pd.DataFrame):
         self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
         self['current_total'] = self.apply(self.calc_current_total, axis=1)
         self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
-        self['pivot_val'] = self['pivot_rate'] * self['current_val']
+        self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)
 
         if self.usd >= 0:
             pass
@@ -109,3 +109,12 @@ class Controller(pd.DataFrame):
             return -1 * row['virtual_amt'] * row['current_val']
         else:
             return np.nan
+
+
+    def calc_pivot_val(self, row):
+        normal = row['pivot_rate'] * row['current_val']
+        many = row['current_total'] * 0.015
+        if (row['current_val'] * (2*row['pivot_rate']-1)) < many:
+            return many
+        else:
+            return normal
