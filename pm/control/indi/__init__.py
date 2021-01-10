@@ -6,7 +6,6 @@ from pm.config import cfg
 
 class IndiAPI(object):
     def __init__(self):
-        super().__init__()
         self.indi = QAxWidget('GIEXPERTCONTROL.GiExpertControlCtrl.1')
         self.indi.ReceiveData.connect(self.receive)
         self.indi.ReceiveSysMsg.connect(self.recieve_sys_msg)
@@ -15,6 +14,7 @@ class IndiAPI(object):
         self.rec_funcs = {
             'SABA655Q1': self.rec_total_acnt,
             'SABA200QB': self.rec_stock_acnt,
+            'SABA101U1': self.rec_order,
         }
 
 
@@ -67,14 +67,18 @@ class IndiAPI(object):
 
     def receive(self, req_id:int=None):
         name = self.req_ids[req_id]
-        return self.rec_funcs[name]()
+        return self.rec_funcs[name](req_id)
 
 
-    def rec_total_acnt(self):
+    def rec_total_acnt(self, *args, **kwargs):
         raise NotImplementedError()
 
 
-    def rec_stock_acnt(self):
+    def rec_stock_acnt(self, *args, **kwargs):
+        raise NotImplementedError()
+
+
+    def rec_order(self, *args, **kwargs):
         raise NotImplementedError()
 
 
@@ -101,6 +105,8 @@ class IndiAPI(object):
 
     def recieve_sys_msg(self, msg_id:int):
         if msg_id == 10:
-            log('Quit Indi')
+            log('QuitIndi')
         elif msg_id == 11:
-            log('Start Indi')
+            log('START_INDI')
+        else:
+            log(f'REC_MSG:{msg_id}')

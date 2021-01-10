@@ -6,22 +6,28 @@ from pm.log import log
 from pm.control.indi import IndiAPI
 from pm.control.shi import SHI
 from pm.control.casting import str2int, fstr2float
-from pm.control.view import pbar_cntr
 
 
 class IndiKRInfo(IndiAPI):
+    def login(self, view, id:str=cfg.SH_ID, pw:str=cfg.SH_PW, cert_pw:str=cfg.CERT_PW, path:str=cfg.PATH_INDI):
+        self.view = view
+        return self.indi.StartIndi(id, pw, cert_pw, path)
+
+
     def recieve_sys_msg(self, msg_id:int):
         if msg_id == 10:
-            log('Quit Indi')
+            log('QUIT_INDI')
             SHI.open()
         elif msg_id == 11:
-            log('Start Indi')
+            log('START_INDI')
+            self.view.api_origin_get()
+            self.quit()
+        else:
+            log(f'REC_MSG:{msg_id}')
 
 
-    def req(self, origin=None, pbar=None, status_cb=None):
-        self.pbar = pbar
+    def req(self, origin=None):
         self.origin = origin
-        self.status_cb = status_cb
         return self.request(
             name='SABA655Q1',
             datas={
@@ -43,7 +49,7 @@ class IndiKRInfo(IndiAPI):
         )
 
 
-    def rec_total_acnt(self):
+    def rec_total_acnt(self, req_id=None):
         ret = self.rec_single_data({
             '순자산평가금액': 0,
             '주식평가금액': 3,
@@ -55,13 +61,11 @@ class IndiKRInfo(IndiAPI):
             ret[col] = ret[col].apply(str2int)
         if self.origin is not None:
             self.origin.set_total_acnt(ret)
-        if self.pbar is not None:
-            pbar_cntr.plus(self.pbar, 50)
         log('INDI_TOTAL_ACNT')
         self.__req_stock__()
 
 
-    def rec_stock_acnt(self):
+    def rec_stock_acnt(self, req_id=None):
         ret = self.rec_multi_data({
             '종목코드':0,
             '종목명':1,
@@ -73,6 +77,4 @@ class IndiKRInfo(IndiAPI):
         if self.origin is not None:
             self.origin.set_stock_acnt(ret)
             self.origin.save()
-        if self.pbar is not None:
-            pbar_cntr.plus(self.pbar, 50)
         log('INDI_STOCK_ACNT')

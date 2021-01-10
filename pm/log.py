@@ -59,9 +59,9 @@ def log_bid_kr(ticker, amt, price, order_id, total_val, cost):
     log('BID_KR', msg)
 
 
-def log_bid_kr_fail(ticker, amt, price, order_id, total_val, cost):
+def log_bid_kr_fail(ticker, amt, price, order_id=-1, total_val=None, cost=None):
     msg = f'[Ticker:{ticker}][ExecAmt:{amt}][ExecPrice:{price}][OrderId:{order_id}][TotalVal:{total_val}][Cost:{cost}]'
-    log_fail('BID_KR', msg)
+    log_fail('BID_KR_FAIL', msg)
 
 
 def log_ask_kr(ticker, amt, price, order_id, total_val, cost, tax):
@@ -69,9 +69,9 @@ def log_ask_kr(ticker, amt, price, order_id, total_val, cost, tax):
     log('ASK_KR', msg)
 
 
-def log_ask_kr_fail(ticker, amt, price, order_id, total_val, cost, tax):
+def log_ask_kr_fail(ticker, amt, price, order_id=-1, total_val=None, cost=None, tax=None):
     msg = f'[Ticker:{ticker}][ExecAmt:{amt}][ExecPrice:{price}][OrderId:{order_id}][TotalVal:{total_val}][Cost:{cost}][Tax:{tax}]'
-    log_fail('ASK_KR', msg)
+    log_fail('ASK_KR_FAIL', msg)
 
 
 def log_bid(ticker, usd, exec_amt, exec_price, bf_amt):

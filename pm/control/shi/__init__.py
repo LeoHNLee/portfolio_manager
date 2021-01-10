@@ -6,10 +6,9 @@ import uiautomation as ui
 from uiautomation import uiautomation as ui_ui
 from _ctypes import COMError
 import pandas as pd
-import numpy as np
 
 from pm.config import cfg
-from pm.log import dt2log, log, log_err, log_order, log_bid, log_ask, log_bid_fail, log_ask_fail, log_backup, log_save
+from pm.log import log, log_err, log_bid, log_ask, log_bid_fail, log_ask_fail
 from pm.control import Controller
 from pm.control.casting import fstr2int, to_win_path
 

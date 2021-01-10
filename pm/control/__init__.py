@@ -1,7 +1,11 @@
+import time
+from datetime import datetime as dt
 import pandas as pd
 import numpy as np
 
-from pm.log import log_save, log_backup, log_usd, log_order
+from pm.config import cfg
+from pm.log import dt2log, log_save, log_backup, log_order
+from pm.control.casting import to_win_path
 
 
 class Controller(pd.DataFrame):
@@ -59,6 +63,9 @@ class Controller(pd.DataFrame):
         krw_idx = self[self['name']=='KRW'].index[0]
         self.loc[krw_idx, 'current_val'] = krw
         self.us_total = total_acnt['외화자산평가금액'].sum()
+        self.us_stock = self[self['cat0']=='US']['current_total'].sum()
+        usd_idx = self[self['name']=='USD'].index[0]
+        self.loc[usd_idx, 'current_val'] = self.us_total-self.us_stock
 
 
     def set_stock_acnt(self, stock_acnt):
