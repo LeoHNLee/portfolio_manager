@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime as dt
 
 from PyQt5.QtCore import Qt
@@ -14,13 +13,10 @@ from pm.control.casting import str2int, fstr2float
 class IndiKRMarket(IndiAPI):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.ok = True
         self.trans = {}
 
 
-    def login(self, origin, end_time, id:str=cfg.SH_ID, pw:str=cfg.SH_PW, cert_pw:str=cfg.CERT_PW, path:str=cfg.PATH_INDI):
-        self.origin = origin
-        self.end_time = end_time
+    def login(self, id:str=cfg.SH_ID, pw:str=cfg.SH_PW, cert_pw:str=cfg.CERT_PW, path:str=cfg.PATH_INDI):
         return self.indi.StartIndi(id, pw, cert_pw, path)
 
 
@@ -29,32 +25,13 @@ class IndiKRMarket(IndiAPI):
             log('QUIT_INDI')
         elif msg_id == 11:
             log('START_INDI')
-            asyncio.run(self.run())
         else:
             log(f'REC_MSG:{msg_id}')
 
 
-    async def run(self):
-        try:
-            # while dt.now() < self.end_time:
-                if self.ok:
-                    await self.req()
-                await asyncio.sleep(1)
-
-        except Exception as e:
-            log_err('AnyException', e)
-            # QMessageBox.warning(
-            #     self, 
-            #     'Error!', 
-            #     f'''AnyException!
-            #     >>>{e}<<<''',
-            # )
-        log('KR_END')
-
-
-    async def req(self):
+    def req(self, origin):
         log('KR_REQ')
-        self.ok = False
+        self.origin = origin
         return self.request(
             name='SABA655Q1',
             datas={
@@ -91,6 +68,7 @@ class IndiKRMarket(IndiAPI):
             },
         )
 
+
     def rec_stock_acnt(self, req_id=None):
         ret = self.rec_multi_data({
             '종목코드':0,
@@ -106,6 +84,7 @@ class IndiKRMarket(IndiAPI):
         self.origin.calculate()
         self.origin['virtual_amt'] -= self.origin.apply(self.order, axis=1)
         self.origin.save()
+        log('KR_END')
 
 
     def order(self, row):
@@ -120,7 +99,7 @@ class IndiKRMarket(IndiAPI):
         v_amt = self.origin.order_amt(v_diff, cprice)
         t_amt = self.origin.order_amt(t_diff, cprice)
 
-        if cat!='US':
+        if cat!='KR':
             pass
 
         elif pos == 'neutral':

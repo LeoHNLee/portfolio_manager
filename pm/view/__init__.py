@@ -34,6 +34,7 @@ class PMWindow(QMainWindow, form_class):
         self.USStartTime_dt.setDateTime(start_dt)
         self.USEndTime_dt.setDateTime(end_dt)
 
+        self.KRReady_pb.clicked.connect(self.kr_ready)
         self.KRStart_pb.clicked.connect(self.kr_start)
         start_dt = QDateTime.currentDateTime()
         start_dt.setTime(QTime(9, 0))
@@ -103,12 +104,15 @@ class PMWindow(QMainWindow, form_class):
         log('US_END')
 
 
-    def kr_start(self):
-        log('PRESS_KR_START')
+    def kr_ready(self):
         self.origin_load_kr()
         if self.Backup_cb.isChecked():
             self.origin.backup()
+        self.indi_kr_market = IndiKRMarket()
+        self.indi_kr_market.login()
 
+
+    def kr_start(self):
         start_time = qtdt2dt(self.KRStartTime_dt)
         end_time = qtdt2dt(self.KREndTime_dt)
         if start_time is None:
@@ -116,14 +120,13 @@ class PMWindow(QMainWindow, form_class):
         if end_time is None:
             end_time=start_time+td(minutes=1)
         time.sleep(1)
-        while (
+        if (
             dt.now() < start_time
+            or dt.now() > end_time
         ):
             log('WAIT UNTIL OPEN MARKET')
-            time.sleep(60)
-
-        self.indi_kr_market = IndiKRMarket()
-        self.indi_kr_market.login(self.origin, end_time)
+            return
+        self.indi_kr_market.req(self.origin)
 
 
     def api_shi_quit(self):
