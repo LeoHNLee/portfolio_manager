@@ -32,9 +32,6 @@ class PMWindow(QMainWindow, form_class):
         end_dt.setTime(QTime(6, 0))
         self.USStartTime_dt.setDateTime(start_dt)
         self.USEndTime_dt.setDateTime(end_dt)
-        self.indi_info_updated = False
-        self.origin_file_loaded = False
-        self.indi_kr_info = IndiKRInfo()
 
         self.KRStart_pb.clicked.connect(self.kr_start)
         start_dt = QDateTime.currentDateTime()
@@ -43,6 +40,11 @@ class PMWindow(QMainWindow, form_class):
         end_dt.setTime(QTime(15, 20))
         self.KRStartTime_dt.setDateTime(start_dt)
         self.KREndTime_dt.setDateTime(end_dt)
+
+        self.indi_kr_info = IndiKRInfo()
+        self.indi_kr_market = IndiKRMarket()
+        self.indi_info_updated = False
+        self.origin_file_loaded = False
 
 
     def us_ready(self):
@@ -102,7 +104,7 @@ class PMWindow(QMainWindow, form_class):
             )
             return
 
-        if self.APIBackup_cb.isChecked():
+        if self.Backup_cb.isChecked():
             self.origin.backup()
         self.indi_kr_info.req(
             origin=self.origin,
@@ -114,7 +116,7 @@ class PMWindow(QMainWindow, form_class):
 
 
     def us_start(self):
-        log('PRESS_US_CNTR_START')
+        log('PRESS_US_START')
         if not self.origin_file_loaded:
             QMessageBox.warning(
                 self, 
@@ -131,7 +133,7 @@ class PMWindow(QMainWindow, form_class):
             )
             return
 
-        if self.APIBackup_cb.isChecked():
+        if self.Backup_cb.isChecked():
             self.origin.backup()
 
         start_time = qtdt2dt(self.USStartTime_dt)
@@ -141,9 +143,6 @@ class PMWindow(QMainWindow, form_class):
             self.origin.run(
                 start_time,
                 end_time,
-                pbar=self.US_pbar,
-                iter_tb=self.USIter_tb,
-                trans_tb=self.USTrans_tb,
             )
         except (LookupError, COMError) as e:
             log_err('LookupError', e)
@@ -153,8 +152,37 @@ class PMWindow(QMainWindow, form_class):
                 f'''LookupError!
                 >>>{e}<<<''',
             )
-        log('US_CNTR_END')
+        log('US_END')
 
 
     def kr_start(self):
-        pass
+        log('PRESS_KR_START')
+        if not self.indi_kr_market.login():
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Failed Open and Login SH Indi!',
+            )
+
+        self.api_origin_load()
+
+        if self.Backup_cb.isChecked():
+            self.origin.backup()
+
+        start_time = qtdt2dt(self.KRStartTime_dt)
+        end_time = qtdt2dt(self.KREndTime_dt)
+        time.sleep(1)
+        try:
+            self.origin.run(
+                start_time,
+                end_time,
+            )
+        except Exception as e:
+            log_err('AnyException', e)
+            QMessageBox.warning(
+                self, 
+                'Error!', 
+                f'''AnyException!
+                >>>{e}<<<''',
+            )
+        log('KR_END')

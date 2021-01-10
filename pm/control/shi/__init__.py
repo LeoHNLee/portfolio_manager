@@ -12,7 +12,6 @@ from pm.config import cfg
 from pm.log import dt2log, log, log_err, log_order, log_bid, log_ask, log_bid_fail, log_ask_fail, log_backup, log_save
 from pm.control import Controller
 from pm.control.casting import fstr2int, to_win_path
-from pm.control.view import pbar_cntr, tb_cntr
 
 
 class SHI(Controller):
@@ -69,7 +68,6 @@ class SHI(Controller):
 
     def run(
         self, start_time:dt=None, end_time:dt=None,
-        pbar=None, iter_tb=None, trans_tb=None,
     ):
         log('RUN_SHI_CONTROLLER')
         if start_time is None:
@@ -82,10 +80,6 @@ class SHI(Controller):
             time.sleep(60)
 
         while dt.now() < end_time:
-            if pbar is not None:
-                pbar_cntr.timer(pbar, start_time, end_time)
-            if iter_tb is not None:
-                tb_cntr.plus(iter_tb, 1)
             n_try = 0
             while n_try < 10:
                 try:
@@ -102,7 +96,7 @@ class SHI(Controller):
             self.calculate(tmp_df=tmp_df)
             self['position'] = self.apply(self.adjust_pos, axis=1)
             self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
-            self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
+            self['virtual_amt'] -= self.apply(self.order, axis=1)
             self.save()
 
 
@@ -157,7 +151,7 @@ class SHI(Controller):
         log_usd('CALCULATE', self.usd)
 
 
-    def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb):
+    def bid(self, ticker:str, amt:int, cprice:int, bf_amt):
         if self.usd < cprice*2:
             return log_bid_fail(ticker, self.usd, cprice)
 
@@ -180,10 +174,9 @@ class SHI(Controller):
         else:
             self.usd -= amt*cprice
             log_bid(ticker, self.usd, amt, cprice, bf_amt)
-            tb_cntr.plus(trans_tb, amt)
 
 
-    def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int, trans_tb):
+    def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int):
         if bf_amt < amt:
             return log_ask_fail(ticker, self.usd, amt, bf_amt)
 
@@ -206,4 +199,3 @@ class SHI(Controller):
         else:
             self.usd += amt*cprice
             log_ask(ticker, self.usd, amt, cprice, bf_amt)
-            tb_cntr.plus(trans_tb, amt)

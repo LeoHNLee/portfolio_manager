@@ -108,7 +108,7 @@ class Controller(pd.DataFrame):
             return normal
 
 
-    def order(self, row, trans_tb=None) -> int:
+    def order(self, row) -> int:
         ticker = row['name']
         cat = row['cat0']
         pos = row['position']
@@ -125,26 +125,26 @@ class Controller(pd.DataFrame):
 
         elif pos == 'neutral':
             if t_diff < -pivot:
-                self.ask(ticker, t_amt, cprice, bf_amt, trans_tb)
+                self.ask(ticker, t_amt, cprice, bf_amt)
             elif t_diff > pivot:
-                self.bid(ticker, t_amt, cprice, bf_amt, trans_tb)
+                self.bid(ticker, t_amt, cprice, bf_amt)
 
         elif pos == 'buy':
             if v_diff < -pivot:
                 log_order('VIRTUAL_ASK', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
                 return v_amt
             elif v_diff > pivot:
-                self.bid(ticker, v_amt, cprice, bf_amt, trans_tb)
+                self.bid(ticker, v_amt, cprice, bf_amt)
 
         elif pos in ('sell', 'out'):
             if v_diff < -pivot:
-                self.ask(ticker, v_amt, cprice, bf_amt, trans_tb)
+                self.ask(ticker, v_amt, cprice, bf_amt)
             elif v_diff > pivot:
                 log_order('VIRTUAL_BID', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
                 return v_amt
 
         elif pos == 'in':
-            self.bid(ticker, 1, 0, 0, trans_tb)
+            self.bid(ticker, 1, 0, 0)
 
         return 0
 

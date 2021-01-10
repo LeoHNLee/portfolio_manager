@@ -9,7 +9,6 @@ from pm.log import dt2log, log, log_err, log_bid_kr, log_ask_kr, log_bid_kr_fail
 from pm.control import Controller
 from pm.control.indi import IndiAPI
 from pm.control.casting import fstr2int, to_win_path, str2int
-from pm.control.view import pbar_cntr, tb_cntr
 
 
 class KRCntr(Controller, IndiAPI):
@@ -31,28 +30,20 @@ class KRCntr(Controller, IndiAPI):
 
     def run(
         self, start_time:dt=None, end_time:dt=None,
-        pbar=None, iter_tb=None, trans_tb=None,
     ):
         log('RUN_KOR_CONTROLLER')
         if start_time is None:
             start_time=dt.now()
         if end_time is None:
             end_time=start_time+td(minutes=1)
-
-        self.login()
-        self.ok = True
-
         while dt.now() < start_time:
             log('WAIT UNTIL OPEN MARCKET')
             time.sleep(60)
 
+        self.ok = True
         while dt.now() < end_time:
             if not self.ok:
                 continue
-            if pbar is not None:
-                pbar_cntr.timer(pbar, start_time, end_time)
-            if iter_tb is not None:
-                tb_cntr.plus(iter_tb, 1)
             self.__total_acnt()
 
 
@@ -134,7 +125,7 @@ class KRCntr(Controller, IndiAPI):
         log('CALCULATE')
 
 
-    def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb=None):
+    def bid(self, ticker:str, amt:int, cprice:int, bf_amt):
         if self.usd < cprice*2:
             return log_bid_fail(ticker, self.usd, cprice)
 
@@ -184,12 +175,11 @@ class KRCntr(Controller, IndiAPI):
         del self.trans[req_id]
 
 
-    def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int, trans_tb):
+    def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int):
         if bf_amt < amt:
             return log_ask_fail(ticker, self.usd, amt, bf_amt)
 
         log_ask(ticker, self.usd, amt, cprice, bf_amt)
-        tb_cntr.plus(trans_tb, amt)
         return self.request(
             name='SABA101U1',
             datas={
