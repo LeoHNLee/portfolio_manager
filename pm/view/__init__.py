@@ -12,6 +12,7 @@ from pm.log import log, log_err
 from pm.control.casting import dt2str, qtdt2dt, to_win_path
 from pm.control.indi.kr_info import IndiKRInfo
 from pm.control.shi import SHI
+from pm.control.kr import KRCntr
 
 
 form_class = uic.loadUiType('pm/templates/main.ui')[0]
@@ -22,53 +23,48 @@ class PMWindow(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
 
-        self.APIIndi_cb.stateChanged.connect(self.api_status_indi)
-
-        self.APISHIOpen_pb.clicked.connect(self.api_shi_open)
-        self.APISHIPopup_pb.clicked.connect(self.api_shi_popup)
-        self.APISHIQuit_pb.clicked.connect(self.api_shi_quit)
-
-        self.APIOriginLoad_pb.clicked.connect(self.api_origin_load)
-        self.APIOriginGet_pb.clicked.connect(self.api_origin_get)
-
-        self.USStart_pb.clicked.connect(self.us_cntr_start)
+        self.USReady_pb.clicked.connect(self.us_ready)
+        self.USPopup_pb.clicked.connect(self.us_popup)
+        self.USStart_pb.clicked.connect(self.us_start)
         start_dt = QDateTime.currentDateTime()
         start_dt.setTime(QTime(23, 30))
         end_dt = QDateTime.currentDateTime()
         end_dt.setTime(QTime(6, 0))
         self.USStartTime_dt.setDateTime(start_dt)
         self.USEndTime_dt.setDateTime(end_dt)
-
         self.indi_info_updated = False
         self.origin_file_loaded = False
         self.indi_kr_info = IndiKRInfo()
 
-
-    def api_status_indi(self):
-        if self.APIIndi_cb.isChecked():
-            ok = self.indi_kr_info.login()
-            if not ok:
-                QMessageBox.warning(
-                    self, 
-                    'Warning!', 
-                    'Failed Open and Login SH Indi!',
-                )
-        else:
-            ok = self.indi_kr_info.quit()
-            if not ok:
-                QMessageBox.warning(
-                    self, 
-                    'Warning!', 
-                    'Failed Close SH Indi!',
-                )
+        self.KRStart_pb.clicked.connect(self.kr_start)
+        start_dt = QDateTime.currentDateTime()
+        start_dt.setTime(QTime(9, 0))
+        end_dt = QDateTime.currentDateTime()
+        end_dt.setTime(QTime(15, 20))
+        self.KRStartTime_dt.setDateTime(start_dt)
+        self.KREndTime_dt.setDateTime(end_dt)
 
 
-    def api_shi_open(self):
-        SHI.open()
-        log('SHI_OPEN')
+    def us_ready(self):
+        if not self.indi_kr_info.login():
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Failed Open and Login SH Indi!',
+            )
+
+        self.api_origin_load()
+        self.api_origin_get()
+
+        if not self.indi_kr_info.quit():
+            QMessageBox.warning(
+                self, 
+                'Warning!', 
+                'Failed Close SH Indi!',
+            )
 
 
-    def api_shi_popup(self):
+    def us_popup(self):
         try:
             SHI.popup()
         except (LookupError, COMError) as e:
@@ -77,7 +73,6 @@ class PMWindow(QMainWindow, form_class):
                 'Warning!', 
                 'Not Open the SHI!',
             )
-        log('SHI_POPUP')
 
 
     def api_shi_quit(self):
@@ -89,10 +84,9 @@ class PMWindow(QMainWindow, form_class):
                 'Warning!', 
                 'Not Open the SHI!',
             )
-        log('SHI_QUIT')
 
 
-    def api_origin_load(self, _, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn='origin.csv'):
+    def api_origin_load(self, _=None, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn='origin.csv'):
         file_path = to_win_path(root_path, dir_path, fn)
         self.origin = SHI.read_csv(file_path, encoding='cp949')
         self.origin_file_loaded = True
@@ -119,7 +113,7 @@ class PMWindow(QMainWindow, form_class):
         log('ORIGIN_GET')
 
 
-    def us_cntr_start(self):
+    def us_start(self):
         log('PRESS_US_CNTR_START')
         if not self.origin_file_loaded:
             QMessageBox.warning(
@@ -160,3 +154,7 @@ class PMWindow(QMainWindow, form_class):
                 >>>{e}<<<''',
             )
         log('US_CNTR_END')
+
+
+    def kr_start(self):
+        pass

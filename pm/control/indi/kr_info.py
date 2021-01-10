@@ -4,11 +4,20 @@ from PyQt5.QtGui import QColor
 from pm.config import cfg
 from pm.log import log
 from pm.control.indi import IndiAPI
+from pm.control.shi import SHI
 from pm.control.casting import str2int, fstr2float
 from pm.control.view import pbar_cntr
 
 
 class IndiKRInfo(IndiAPI):
+    def recieve_sys_msg(self, msg_id:int):
+        if msg_id == 10:
+            log('Quit Indi')
+            SHI.open()
+        elif msg_id == 11:
+            log('Start Indi')
+
+
     def req(self, origin=None, pbar=None, status_cb=None):
         self.pbar = pbar
         self.origin = origin

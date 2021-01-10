@@ -30,6 +30,7 @@ class SHI(Controller):
     @staticmethod
     def open(path:str=cfg.PATH_SHI):
         subprocess.Popen(path)
+        log('SHI_OPEN')
 
 
     @staticmethod
@@ -52,6 +53,7 @@ class SHI(Controller):
         ui.ButtonControl(searchDepth=4, Name='미국', AutomationId='3775').Click()
         time.sleep(1)
         ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
+        log('SHI_POPUP')
 
 
     @staticmethod
@@ -62,6 +64,7 @@ class SHI(Controller):
         ok = ui.ButtonControl(searchDepth=4, Name='신한아이 종료', AutomationId='3787')
         ok.SetFocus()
         ok.Click()
+        log('SHI_QUIT')
 
 
     def run(
