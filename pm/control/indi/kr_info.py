@@ -54,15 +54,16 @@ class IndiKRInfo(IndiAPI):
             '순자산평가금액': 0,
             '주식평가금액': 3,
             '외화자산평가금액': 13,
+            '예수금합계':17,
             '현금증거금합계': 18,
             '인출가능금액합계':19,
         })
         for col in ret.columns:
             ret[col] = ret[col].apply(str2int)
-        if self.origin is not None:
-            self.origin.set_total_acnt(ret)
+        self.origin.set_total_acnt(ret)
+        self.origin.save()
         log('INDI_TOTAL_ACNT')
-        self.__req_stock__()
+        # self.__req_stock__()
 
 
     def rec_stock_acnt(self, req_id=None):
@@ -74,7 +75,6 @@ class IndiKRInfo(IndiAPI):
         })
         ret['결제일잔고수량'] = ret['결제일잔고수량'].apply(str2int)
         ret['현재가'] = ret['현재가'].apply(fstr2float)
-        if self.origin is not None:
-            self.origin.set_stock_acnt(ret)
-            self.origin.save()
+        self.origin.set_stock_acnt(ret)
+        self.origin.save()
         log('INDI_STOCK_ACNT')
