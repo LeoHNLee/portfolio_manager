@@ -6,7 +6,6 @@ from pm.config import cfg
 
 class IndiAPI(object):
     def __init__(self):
-        super().__init__()
         self.indi = QAxWidget('GIEXPERTCONTROL.GiExpertControlCtrl.1')
         self.indi.ReceiveData.connect(self.receive)
         self.indi.ReceiveSysMsg.connect(self.recieve_sys_msg)
@@ -15,13 +14,14 @@ class IndiAPI(object):
         self.rec_funcs = {
             'SABA655Q1': self.rec_total_acnt,
             'SABA200QB': self.rec_stock_acnt,
+            'SABA101U1': self.rec_order,
         }
 
 
     def login(self, id:str=cfg.SH_ID, pw:str=cfg.SH_PW, cert_pw:str=cfg.CERT_PW, path:str=cfg.PATH_INDI):
         return self.indi.StartIndi(id, pw, cert_pw, path)
-    
-    
+
+
     def quit(self):
         return self.indi.CloseIndi()
 
@@ -67,14 +67,18 @@ class IndiAPI(object):
 
     def receive(self, req_id:int=None):
         name = self.req_ids[req_id]
-        return self.rec_funcs[name]()
+        return self.rec_funcs[name](req_id)
 
 
-    def rec_total_acnt(self):
+    def rec_total_acnt(self, *args, **kwargs):
         raise NotImplementedError()
 
 
-    def rec_stock_acnt(self):
+    def rec_stock_acnt(self, *args, **kwargs):
+        raise NotImplementedError()
+
+
+    def rec_order(self, *args, **kwargs):
         raise NotImplementedError()
 
 
@@ -99,5 +103,10 @@ class IndiAPI(object):
         return ret
 
 
-    def recieve_sys_msg(self, msg_id):
-        print("System Message Received = ", msg_id)
+    def recieve_sys_msg(self, msg_id:int):
+        if msg_id == 10:
+            log('QuitIndi')
+        elif msg_id == 11:
+            log('START_INDI')
+        else:
+            log(f'REC_MSG:{msg_id}')

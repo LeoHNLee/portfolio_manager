@@ -6,13 +6,11 @@ import uiautomation as ui
 from uiautomation import uiautomation as ui_ui
 from _ctypes import COMError
 import pandas as pd
-import numpy as np
 
 from pm.config import cfg
-from pm.log import dt2log, log, log_err, log_order, log_bid, log_ask, log_bid_fail, log_ask_fail, log_backup, log_save
+from pm.log import log, log_usd, log_err, log_bid, log_ask, log_bid_fail, log_ask_fail
 from pm.control import Controller
 from pm.control.casting import fstr2int, to_win_path
-from pm.control.view import pbar_cntr, tb_cntr
 
 
 class SHI(Controller):
@@ -27,21 +25,10 @@ class SHI(Controller):
         return SHI.from_df(df)
 
 
-    def save(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn=cfg.PATH_ORIGIN):
-        file_path = to_win_path(root_path, dir_path, fn)
-        self.to_csv(file_path, index=False, encoding='cp949')
-        log_save(file_path)
-
-
-    def backup(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA):
-        file_path = to_win_path(root_path, dir_path, f'backup/{dt2log(dt.now())}.csv')
-        self.to_csv(file_path, index=False, encoding='cp949')
-        log_backup(file_path)
-
-
     @staticmethod
     def open(path:str=cfg.PATH_SHI):
         subprocess.Popen(path)
+        log('SHI_OPEN')
 
 
     @staticmethod
@@ -64,6 +51,7 @@ class SHI(Controller):
         ui.ButtonControl(searchDepth=4, Name='미국', AutomationId='3775').Click()
         time.sleep(1)
         ui.WindowControl(searchDepth=2, Name='(3754)미니주문(미국)').SetFocus()
+        log('SHI_POPUP')
 
 
     @staticmethod
@@ -74,11 +62,11 @@ class SHI(Controller):
         ok = ui.ButtonControl(searchDepth=4, Name='신한아이 종료', AutomationId='3787')
         ok.SetFocus()
         ok.Click()
+        log('SHI_QUIT')
 
 
     def run(
         self, start_time:dt=None, end_time:dt=None,
-        pbar=None, iter_tb=None, trans_tb=None,
     ):
         log('RUN_SHI_CONTROLLER')
         if start_time is None:
@@ -91,10 +79,6 @@ class SHI(Controller):
             time.sleep(60)
 
         while dt.now() < end_time:
-            if pbar is not None:
-                pbar_cntr.timer(pbar, start_time, end_time)
-            if iter_tb is not None:
-                tb_cntr.plus(iter_tb, 1)
             n_try = 0
             while n_try < 10:
                 try:
@@ -108,10 +92,12 @@ class SHI(Controller):
                     ui_ui.SendKeys('{Enter}')
                 else:
                     break
-            self.calculate(tmp_df=tmp_df)
+            ok = self.calculate(tmp_df=tmp_df)
+            if not ok:
+                continue
             self['position'] = self.apply(self.adjust_pos, axis=1)
             self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
-            self['virtual_amt'] -= self.apply(lambda row: self.order(row, trans_tb), axis=1)
+            self['virtual_amt'] -= self.apply(self.order, axis=1)
             self.save()
 
 
@@ -126,6 +112,8 @@ class SHI(Controller):
         rt.SetFocus()
         time.sleep(1)
         ui.ButtonControl(searchDepth=4, Name='조 회', AutomationId='3813').Click()
+        time.sleep(1)
+        ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
         time.sleep(1)
         rt.RightClick()
         time.sleep(1)
@@ -142,48 +130,38 @@ class SHI(Controller):
         return ret
 
 
-    def order(self, row, trans_tb=None) -> int:
-        ticker = row['name']
-        cat = row['cat0']
-        pos = row['position']
-        bf_amt = row['current_amt']
-        t_diff = row['target_diff']
-        v_diff = row['virtual_diff']
-        pivot = row['pivot_val']
-        cprice = row['current_val']
-        v_amt = self.order_amt(v_diff, cprice)
-        t_amt = self.order_amt(t_diff, cprice)
+    def calculate(self, tmp_df:pd.DataFrame):
+        self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
+        self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
+        for val, total, amt in self[['current_val', 'current_total', 'current_amt']].to_numpy():
+            if val < total/(amt*2):
+                return False
+        for idx, amt in enumerate(self['virtual_amt']):
+            if abs(amt) > 100:
+                self.loc[idx, 'virtual_amt'] = 0
+        self['current_total'] = self['current_amt'] * self['current_val']
+        self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
+        self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)
 
-        if cat!='US':
+        if self.usd >= 0:
             pass
-
-        elif pos == 'neutral':
-            if t_diff < -pivot:
-                self.ask(ticker, t_amt, cprice, bf_amt, trans_tb)
-            elif t_diff > pivot:
-                self.bid(ticker, t_amt, cprice, bf_amt, trans_tb)
-
-        elif pos == 'buy':
-            if v_diff < -pivot:
-                log_order('VIRTUAL_ASK', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
-                return v_amt
-            elif v_diff > pivot:
-                self.bid(ticker, v_amt, cprice, bf_amt, trans_tb)
-
-        elif pos in ('sell', 'out'):
-            if v_diff < -pivot:
-                self.ask(ticker, v_amt, cprice, bf_amt, trans_tb)
-            elif v_diff > pivot:
-                log_order('VIRTUAL_BID', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
-                return v_amt
-
-        elif pos == 'in':
-            self.bid(ticker, 1, 0, 0, trans_tb)
-
-        return 0
+        elif self.us_total >= 0:
+            us_stock_total = self[self['cat0']=='US']['current_total'].sum()
+            self.usd = self.us_total - us_stock_total
+        else:
+            pass
+        usd_idx = self[self['name']=='USD'].index[0]
+        self.loc[usd_idx, 'current_val'] = self.usd
+        self.loc[usd_idx, 'current_total'] = self.usd
+        total = self['current_total'].sum()
+        self['target_total'] = self['target_rate'] * total
+        self['target_diff'] = self['target_total'] - self['current_total']
+        self['virtual_diff'] = self['virtual_total'] + self['target_diff']
+        log_usd('CALCULATE', self.usd)
+        return True
 
 
-    def bid(self, ticker:str, amt:int, cprice:int, bf_amt, trans_tb):
+    def bid(self, ticker:str, amt:int, cprice:int, bf_amt):
         if self.usd < cprice*2:
             return log_bid_fail(ticker, self.usd, cprice)
 
@@ -206,10 +184,9 @@ class SHI(Controller):
         else:
             self.usd -= amt*cprice
             log_bid(ticker, self.usd, amt, cprice, bf_amt)
-            tb_cntr.plus(trans_tb, amt)
 
 
-    def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int, trans_tb):
+    def ask(self, ticker:str, amt:int, cprice:int, bf_amt:int):
         if bf_amt < amt:
             return log_ask_fail(ticker, self.usd, amt, bf_amt)
 
@@ -232,34 +209,3 @@ class SHI(Controller):
         else:
             self.usd += amt*cprice
             log_ask(ticker, self.usd, amt, cprice, bf_amt)
-            tb_cntr.plus(trans_tb, amt)
-
-
-    @staticmethod
-    def order_amt(diff:float, cprice:int) -> int:
-        diff = abs(diff)
-        if (cprice==0) or (np.isnan(diff)) or (diff < cprice):
-            return 1
-        else:
-            return int(diff // cprice)
-
-
-    def adjust_pos(self, row):
-        if (
-            row['position'] != 'neutral'
-            and row['virtual_amt']<1
-        ):
-            return 'neutral'
-        elif (
-            row['position'] == 'in'
-            and row['current_amt'] > 0
-        ):
-            return 'buy'
-        return row['position']
-
-
-    def adjust_threshold(self, row):
-        if (row['position'] == 'neutral')\
-            and (row['pivot_rate'] < 0.8):
-            return 0.8
-        return row['pivot_rate']
