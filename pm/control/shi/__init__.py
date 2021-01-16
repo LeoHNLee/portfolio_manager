@@ -8,7 +8,7 @@ from _ctypes import COMError
 import pandas as pd
 
 from pm.config import cfg
-from pm.log import log, log_err, log_bid, log_ask, log_bid_fail, log_ask_fail
+from pm.log import log, log_usd, log_err, log_bid, log_ask, log_bid_fail, log_ask_fail
 from pm.control import Controller
 from pm.control.casting import fstr2int, to_win_path
 
@@ -92,7 +92,9 @@ class SHI(Controller):
                     ui_ui.SendKeys('{Enter}')
                 else:
                     break
-            self.calculate(tmp_df=tmp_df)
+            ok = self.calculate(tmp_df=tmp_df)
+            if not ok:
+                continue
             self['position'] = self.apply(self.adjust_pos, axis=1)
             self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
             self['virtual_amt'] -= self.apply(self.order, axis=1)
@@ -110,6 +112,8 @@ class SHI(Controller):
         rt.SetFocus()
         time.sleep(1)
         ui.ButtonControl(searchDepth=4, Name='조 회', AutomationId='3813').Click()
+        time.sleep(1)
+        ui.ButtonControl(searchDepth=5, Name='원화기준').Click()
         time.sleep(1)
         rt.RightClick()
         time.sleep(1)
@@ -129,6 +133,12 @@ class SHI(Controller):
     def calculate(self, tmp_df:pd.DataFrame):
         self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
         self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
+        for val, total, amt in self[['current_val', 'current_total', 'current_amt']].to_numpy():
+            if val < total/(amt*2):
+                return False
+        for idx, amt in enumerate(self['virtual_amt']):
+            if abs(amt) > 100:
+                self.loc[idx, 'virtual_amt'] = 0
         self['current_total'] = self['current_amt'] * self['current_val']
         self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
         self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)
@@ -148,6 +158,7 @@ class SHI(Controller):
         self['target_diff'] = self['target_total'] - self['current_total']
         self['virtual_diff'] = self['virtual_total'] + self['target_diff']
         log_usd('CALCULATE', self.usd)
+        return True
 
 
     def bid(self, ticker:str, amt:int, cprice:int, bf_amt):

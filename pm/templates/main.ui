@@ -16,7 +16,7 @@
   <property name="windowTitle">
    <string>Portfolio Manager</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
+  <widget class="QWidget" name="WINDOW">
    <widget class="QGroupBox" name="US">
     <property name="geometry">
      <rect>
@@ -183,7 +183,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="US_2">
+   <widget class="QGroupBox" name="KR">
     <property name="geometry">
      <rect>
       <x>10</x>
