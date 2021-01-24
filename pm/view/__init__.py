@@ -49,6 +49,8 @@ class PMWindow(QMainWindow, form_class):
 
     def us_ready(self):
         self.api_origin_load()
+        if self.Backup_cb.isChecked():
+            self.origin.backup()
         self.indi_kr_info = IndiKRInfo()
         self.indi_kr_info.login(self)
 
@@ -152,21 +154,3 @@ class PMWindow(QMainWindow, form_class):
         self.origin = KRCntr.read_csv(file_path, encoding='cp949')
         self.origin_file_loaded = True
         log('ORIGIN_LOAD')
-
-
-    def api_origin_get(self):
-        if not self.origin_file_loaded:
-            QMessageBox.warning(
-                self, 
-                'Warning!', 
-                'Not Yet Loaded the Original File!',
-            )
-            return
-
-        if self.Backup_cb.isChecked():
-            self.origin.backup()
-        self.indi_kr_info = IndiKRInfo()
-        self.indi_kr_info.req(origin=self.origin)
-        self.indi_info_updated = True
-        self.origin.save()
-        log('ORIGIN_GET')

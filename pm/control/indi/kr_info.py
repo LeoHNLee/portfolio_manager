@@ -11,6 +11,7 @@ from pm.control.casting import str2int, fstr2float
 class IndiKRInfo(IndiAPI):
     def login(self, view, id:str=cfg.SH_ID, pw:str=cfg.SH_PW, cert_pw:str=cfg.CERT_PW, path:str=cfg.PATH_INDI):
         self.view = view
+        self.origin = view.origin
         return self.indi.StartIndi(id, pw, cert_pw, path)
 
 
@@ -20,8 +21,7 @@ class IndiKRInfo(IndiAPI):
             SHI.open()
         elif msg_id == 11:
             log('START_INDI')
-            self.view.api_origin_get()
-            self.quit()
+            self.req(self.origin)
         else:
             log(f'REC_MSG:{msg_id}')
 
@@ -61,9 +61,13 @@ class IndiKRInfo(IndiAPI):
         for col in ret.columns:
             ret[col] = ret[col].apply(str2int)
         self.origin.set_total_acnt(ret)
-        self.origin.save()
-        log('INDI_TOTAL_ACNT')
-        # self.__req_stock__()
+        if origin.usd < 0:
+            self.req(self.origin)
+        else:
+            self.indi_info_updated = True
+            self.origin.save()
+            log('INDI_TOTAL_ACNT')
+            self.quit()
 
 
     def rec_stock_acnt(self, req_id=None):
