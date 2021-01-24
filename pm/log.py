@@ -21,6 +21,11 @@ logger = logging.getLogger()
 logger.addHandler(file_handler)
 
 
+def log_init(report):
+    with open(f"{cfg.PATH_LOG}init/{now}.txt", "w") as f:
+        f.write(report)
+
+
 def log(type, msg=None):
     ret = f'[{type}]'
     if msg is not None:

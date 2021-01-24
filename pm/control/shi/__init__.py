@@ -1,3 +1,4 @@
+from copy import deepcopy
 import time
 import subprocess
 from datetime import datetime as dt
@@ -99,6 +100,67 @@ class SHI(Controller):
             self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
             self['virtual_amt'] -= self.apply(self.order, axis=1)
             self.save()
+
+
+    def init(self):
+        old = deepcopy(self)
+        n_try = 0
+        while n_try < 10:
+            try:
+                tmp_df = self.get_flow()
+            except (LookupError, COMError) as e:
+                n_try += 1
+                log_err('LooupError', e)
+                if n_try >= 10:
+                    raise LookupError(str(e))
+                ui_ui.SendKeys('{Escape}')
+                ui_ui.SendKeys('{Enter}')
+            else:
+                break
+        self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
+        self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
+        self['current_total'] = self['current_amt'] * self['current_val']
+        self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
+        self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)
+
+        if self.usd >= 0:
+           pass
+        elif self.us_total >= 0:
+            us_stock_total = self[self['cat0']=='US']['current_total'].sum()
+            self.usd = self.us_total - us_stock_total
+        else:
+            pass
+        usd_idx = self[self['name']=='USD'].index[0]
+        self.loc[usd_idx, 'current_val'] = self.usd
+        self.loc[usd_idx, 'current_total'] = self.usd
+        total = self['current_total'].sum()
+        self['target_total'] = self['target_rate'] * total
+        self['target_diff'] = self['target_total'] - self['current_total']
+        self['virtual_diff'] = self['virtual_total'] + self['target_diff']
+        self['position'] = self.apply(self.adjust_pos, axis=1)
+        self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
+
+        cols = ['name', 'position', 'current_val', 'current_amt', 'virtual_amt']
+        report = ""
+        for (o_name, o_pos, o_cprice, o_camt, o_vamt),\
+            (n_name, n_pos, n_cprice, n_camt, n_vamt)\
+            in zip(
+            old[cols].to_numpy(),
+            self[cols].to_numpy(),
+        ):
+            if o_name != n_name:
+                log("NOT_MATCH", f"[Ticker:{o_name} != {n_name}]")
+                raise ValueError("Ticker is not matched!")
+
+            report += f"\n<{o_name}>\n"
+            if o_pos != n_pos:
+                report += f":Position: {o_pos} -> {n_pos}\n"
+            report += f":Price {round((n_cprice-o_cprice)/o_cprice*100, 2)}%: {o_cprice} -> {n_cprice}\n"
+            if o_camt != n_camt:
+                report += f":Amount {n_camt-o_camt}: {o_camt} -> {n_camt}\n"
+            if o_vamt != n_vamt:
+                report += f":V Amount {n_vamt-o_vamt}: {o_vamt} -> {n_vamt}\n"
+        return report
 
 
     @staticmethod

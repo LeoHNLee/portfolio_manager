@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import datetime as dt
 from _ctypes import COMError
@@ -8,7 +9,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 from pm.config import cfg
-from pm.log import log, log_err
+from pm.log import log, log_err, log_init
 from pm.control.casting import qtdt2dt, to_win_path
 from pm.control.indi.kr_info import IndiKRInfo
 from pm.control.indi.kr_market import IndiKRMarket
@@ -64,6 +65,17 @@ class PMWindow(QMainWindow, form_class):
                 'Warning!', 
                 'Not Open the SHI!',
             )
+        else:
+            try:
+                report = self.origin.init()
+            except ValueError as e:
+                QMessageBox.warning(
+                    self, 
+                    'Alert!', 
+                    e,
+                )
+            else:
+                log_init(report)
 
 
     def us_start(self):
