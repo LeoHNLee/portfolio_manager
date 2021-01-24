@@ -133,12 +133,6 @@ class SHI(Controller):
     def calculate(self, tmp_df:pd.DataFrame):
         self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
         self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
-        for val, total, amt in self[['current_val', 'current_total', 'current_amt']].to_numpy():
-            if val < total/(amt*2):
-                return False
-        for idx, amt in enumerate(self['virtual_amt']):
-            if abs(amt) > 100:
-                self.loc[idx, 'virtual_amt'] = 0
         self['current_total'] = self['current_amt'] * self['current_val']
         self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
         self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)

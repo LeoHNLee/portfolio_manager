@@ -91,7 +91,7 @@ class Controller(pd.DataFrame):
             return row['current_val']
         ret = tmp_df[tmp_df['종목번호']==row['name']]['현재가']
         if ret.shape[0] == 0:
-            return row['current_amt']
+            return row['current_val']
         return ret.values[0]
 
 
