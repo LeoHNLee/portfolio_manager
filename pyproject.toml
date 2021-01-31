@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "pm"
+version = "21.01.31"
+description = ""
+authors = ["leohnlee <leohnlee@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+PyQt5 = "^5.15.2"
+pandas = "^1.2.1"
+numpy = "^1.20.0"
+uiautomation = "^2.0.10"
+black = "^20.8b1"
+isort = "^5.7.0"
+flake8 = "^3.8.4"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
