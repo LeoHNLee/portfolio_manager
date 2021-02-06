@@ -2,6 +2,7 @@ import time
 from datetime import datetime as dt
 import pandas as pd
 import numpy as np
+from typing import Any
 
 from pm.config import cfg
 from pm.log import dt2log, log_save, log_backup, log_order
@@ -9,6 +10,21 @@ from pm.control.casting import to_win_path
 
 
 class Controller(pd.DataFrame):
+    __pivot_rate_by_pos = {
+        "in": 0.6,
+        "buy": 0.6,
+        "neutral": 0.8,
+        "sell": 0.6,
+        "out": 0.6,
+    }
+    __pivot_rate_by_price = {
+        0: 0.1,
+        1: 0.05,
+        2: 0,
+        3: -0.05,
+    }
+
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.usd = -1
@@ -38,6 +54,11 @@ class Controller(pd.DataFrame):
         log_backup(file_path)
 
 
+    def set_val_at_ticker(self, ticker: str, col: str, val: Any):
+        idx = self[self['name']==ticker].index[0]
+        self.loc[idx, col] = val
+
+
     def calc_current_amt_indi(self, row, stock_acnt):
         if row['cat0'] == 'CASH':
             return 1
@@ -60,7 +81,7 @@ class Controller(pd.DataFrame):
 
     def set_total_acnt(self, total_acnt):
         krw = total_acnt[['현금증거금합계', '인출가능금액합계', '예수금합계']].sum().sum()
-        krw_idx = self[self['name']=='KRW'].index[0]
+        krw_idx = self[(self['name']=='KRW') & (self['cat0']=="CASH")].index[0]
         self.loc[krw_idx, 'current_val'] = krw
         self.us_total = total_acnt['외화자산평가금액'].sum()
         self.us_stock = self[self['cat0']=='US']['current_total'].sum()
@@ -115,45 +136,21 @@ class Controller(pd.DataFrame):
             return normal
 
 
+    def calc_pivot_rate(self, row):
+        default = self.__pivot_rate_by_pos[row["position"]]
+        addon = self.__pivot_rate_by_price.get(min(3, int(row["current_val"]//40000)))
+        return default + addon
+
+
+    def calc_target_rate(self, row):
+        if row["position"] == "out":
+            return 0
+        else:
+            return row["target_rate"]
+
+
     def order(self, row) -> int:
-        ticker = row['name']
-        cat = row['cat0']
-        pos = row['position']
-        bf_amt = row['current_amt']
-        t_diff = row['target_diff']
-        v_diff = row['virtual_diff']
-        pivot = row['pivot_val']
-        cprice = row['current_val']
-        v_amt = self.order_amt(v_diff, cprice)
-        t_amt = self.order_amt(t_diff, cprice)
-
-        if cat!='US':
-            pass
-
-        elif pos == 'neutral':
-            if t_diff < -pivot:
-                self.ask(ticker, t_amt, cprice, bf_amt)
-            elif t_diff > pivot:
-                self.bid(ticker, t_amt, cprice, bf_amt)
-
-        elif pos == 'buy':
-            if v_diff < -pivot:
-                log_order('VIRTUAL_ASK', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
-                return v_amt
-            elif v_diff > pivot:
-                self.bid(ticker, v_amt, cprice, bf_amt)
-
-        elif pos in ('sell', 'out'):
-            if v_diff < -pivot:
-                self.ask(ticker, v_amt, cprice, bf_amt)
-            elif v_diff > pivot:
-                log_order('VIRTUAL_BID', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
-                return v_amt
-
-        elif pos == 'in':
-            self.bid(ticker, 1, 0, 0)
-
-        return 0
+        raise NotImplementedError('order')
 
 
     def bid(self, *args, **kwargs):
