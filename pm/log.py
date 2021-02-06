@@ -40,6 +40,14 @@ def log_err(type, msg):
     print(ret)
 
 
+def log_request(method, url, header = None, body = None):
+    log("REQUEST", f"[Method:{method}][URL:{url}][Header:{header}][Body:{body}]")
+
+
+def log_response(code, method, url, header = None, body = None):
+    log("RESPONSE", f"[Code:{code}][Method:{method}][URL:{url}][Header:{header}][Body:{body}]")
+
+
 def log_fail(type, msg):
     msg = f'[{type}]{msg}'
     logger.error(msg)
