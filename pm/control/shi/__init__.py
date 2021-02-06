@@ -10,6 +10,7 @@ from _ctypes import COMError
 from uiautomation import uiautomation as ui_ui
 
 from pm.config import cfg
+from pm.log import log, log_usd, log_err, log_order, log_bid, log_ask, log_bid_fail, log_ask_fail
 from pm.control import Controller
 from pm.control.casting import fstr2int, to_win_path
 from pm.log import log, log_ask, log_ask_fail, log_bid, log_bid_fail, log_err, log_usd
@@ -78,6 +79,7 @@ class SHI(Controller):
             time.sleep(60)
 
         while dt.now() < end_time:
+            time.sleep(60)
             n_try = 0
             while n_try < 10:
                 try:
@@ -94,10 +96,13 @@ class SHI(Controller):
             ok = self.calculate(tmp_df=tmp_df)
             if not ok:
                 continue
-            self["position"] = self.apply(self.adjust_pos, axis=1)
-            self["pivot_rate"] = self.apply(self.adjust_threshold, axis=1)
-            self["virtual_amt"] -= self.apply(self.order, axis=1)
-            self.save()
+            self['position'] = self.apply(self.adjust_pos, axis=1)
+            self['pivot_rate'] = self.apply(self.adjust_threshold, axis=1)
+            self['virtual_amt'] -= self.apply(self.order, axis=1)
+            try:
+                self.save()
+            except PermissionError:
+                pass
 
     def init(self):
         old = deepcopy(self)
@@ -165,6 +170,11 @@ class SHI(Controller):
                 report += f":Amount {n_camt-o_camt}: {o_camt} -> {n_camt}\n"
             if o_vamt != n_vamt:
                 report += f":V Amount {n_vamt-o_vamt}: {o_vamt} -> {n_vamt}\n"
+        
+        try:
+            self.save()
+        except PermissionError:
+            pass
         return report
 
     @staticmethod
@@ -208,6 +218,15 @@ class SHI(Controller):
         self["virtual_total"] = self.apply(self.calc_virtual_total, axis=1)
         self["pivot_val"] = self.apply(self.calc_pivot_val, axis=1)
 
+    def calculate(self, tmp_df:pd.DataFrame):
+        self['current_amt'] = self.apply(lambda x: self.calc_current_amt(x, tmp_df), axis=1)
+        self['current_val'] = self.apply(lambda x: self.calc_current_val(x, tmp_df), axis=1)
+        self['current_total'] = self['current_amt'] * self['current_val']
+        self['virtual_total'] = self.apply(self.calc_virtual_total, axis=1)
+        self["pivot_rate"] = self.apply(self.calc_pivot_rate, axis=1)
+        self['pivot_val'] = self.apply(self.calc_pivot_val, axis=1)
+        self["target_rate"] = self.apply(self.calc_target_rate, axis=1)
+
         if self.usd >= 0:
             pass
         elif self.us_total >= 0:
@@ -225,8 +244,49 @@ class SHI(Controller):
         log_usd("CALCULATE", self.usd)
         return True
 
-    def bid(self, ticker: str, amt: int, cprice: int, bf_amt):
-        if self.usd < cprice * 2:
+
+    def order(self, row) -> int:
+        ticker = row['name']
+        cat = row['cat0']
+        pos = row['position']
+        bf_amt = row['current_amt']
+        t_diff = row['target_diff']
+        v_diff = row['virtual_diff']
+        pivot = row['pivot_val']
+        cprice = row['current_val']
+        v_amt = self.order_amt(v_diff, cprice)
+        t_amt = self.order_amt(t_diff, cprice)
+
+        if cat!='US':
+            pass
+
+        elif pos == 'neutral':
+            if t_diff < -pivot:
+                self.ask(ticker, t_amt, cprice, bf_amt)
+            elif t_diff > pivot:
+                self.bid(ticker, t_amt, cprice, bf_amt)
+
+        elif pos == 'buy':
+            if v_diff < -pivot:
+                log_order('VIRTUAL_ASK', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
+                return v_amt
+            elif v_diff > pivot:
+                self.bid(ticker, v_amt, cprice, bf_amt)
+
+        elif pos in ('sell', 'out'):
+            if v_diff < -pivot:
+                self.ask(ticker, v_amt, cprice, bf_amt)
+            elif v_diff > pivot:
+                log_order('VIRTUAL_BID', ticker, self.usd, exec_amt=v_amt, pivot=pivot, diff=v_diff)
+                return v_amt
+
+        elif pos == 'in':
+            self.bid(ticker, 1, 0, 0)
+        return 0
+
+
+    def bid(self, ticker:str, amt:int, cprice:int, bf_amt):
+        if self.usd < cprice*2:
             return log_bid_fail(ticker, self.usd, cprice)
 
         try:

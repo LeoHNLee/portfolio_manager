@@ -2,7 +2,11 @@ import time
 from datetime import datetime as dt
 
 import numpy as np
+<<<<<<< HEAD
 import pandas as pd
+=======
+from typing import Any
+>>>>>>> master
 
 from pm.config import cfg
 from pm.control.casting import to_win_path
@@ -10,6 +14,21 @@ from pm.log import dt2log, log_backup, log_order, log_save
 
 
 class Controller(pd.DataFrame):
+    __pivot_rate_by_pos = {
+        "in": 0.6,
+        "buy": 0.6,
+        "neutral": 0.8,
+        "sell": 0.6,
+        "out": 0.6,
+    }
+    __pivot_rate_by_price = {
+        0: 0.1,
+        1: 0.05,
+        2: 0,
+        3: -0.05,
+    }
+
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.usd = -1
@@ -34,6 +53,15 @@ class Controller(pd.DataFrame):
         self.to_csv(file_path, index=False, encoding="cp949")
         log_backup(file_path)
 
+<<<<<<< HEAD
+=======
+
+    def set_val_at_ticker(self, ticker: str, col: str, val: Any):
+        idx = self[self['name']==ticker].index[0]
+        self.loc[idx, col] = val
+
+
+>>>>>>> master
     def calc_current_amt_indi(self, row, stock_acnt):
         if row["cat0"] == "CASH":
             return 1
@@ -53,6 +81,7 @@ class Controller(pd.DataFrame):
         return ret.values[0]
 
     def set_total_acnt(self, total_acnt):
+<<<<<<< HEAD
         krw = total_acnt[["현금증거금합계", "인출가능금액합계", "예수금합계"]].sum().sum()
         krw_idx = self[self["name"] == "KRW"].index[0]
         self.loc[krw_idx, "current_val"] = krw
@@ -60,6 +89,16 @@ class Controller(pd.DataFrame):
         self.us_stock = self[self["cat0"] == "US"]["current_total"].sum()
         usd_idx = self[self["name"] == "USD"].index[0]
         self.loc[usd_idx, "current_val"] = self.us_total - self.us_stock
+=======
+        krw = total_acnt[['현금증거금합계', '인출가능금액합계', '예수금합계']].sum().sum()
+        krw_idx = self[(self['name']=='KRW') & (self['cat0']=="CASH")].index[0]
+        self.loc[krw_idx, 'current_val'] = krw
+        self.us_total = total_acnt['외화자산평가금액'].sum()
+        self.us_stock = self[self['cat0']=='US']['current_total'].sum()
+        usd_idx = self[self['name']=='USD'].index[0]
+        self.loc[usd_idx, 'current_val'] = self.us_total-self.us_stock
+
+>>>>>>> master
 
     def set_stock_acnt(self, stock_acnt):
         self["current_amt"] = self.apply(
@@ -106,6 +145,7 @@ class Controller(pd.DataFrame):
         else:
             return normal
 
+<<<<<<< HEAD
     def order(self, row) -> int:
         ticker = row["name"]
         cat = row["cat0"]
@@ -159,6 +199,24 @@ class Controller(pd.DataFrame):
             self.bid(ticker, 1, 0, 0)
 
         return 0
+=======
+
+    def calc_pivot_rate(self, row):
+        default = self.__pivot_rate_by_pos[row["position"]]
+        addon = self.__pivot_rate_by_price.get(min(3, int(row["current_val"]//40000)))
+        return default + addon
+
+
+    def calc_target_rate(self, row):
+        if row["position"] == "out":
+            return 0
+        else:
+            return row["target_rate"]
+
+
+    def order(self, row) -> int:
+        raise NotImplementedError('order')
+>>>>>>> master
 
     def bid(self, *args, **kwargs):
         raise NotImplementedError("bid")
