@@ -1,11 +1,8 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-
 from pm.config import cfg
-from pm.log import log, log_err
 from pm.control.indi import IndiAPI
 from pm.control.shi import SHI
 from pm.log import log
+from pm.utils.casting import fstr2float, str2int
 
 
 class IndiKRInfo(IndiAPI):
@@ -26,11 +23,10 @@ class IndiKRInfo(IndiAPI):
             log("QUIT_INDI")
             SHI.open()
         elif msg_id == 11:
-            log('START_INDI')
+            log("START_INDI")
             self.req()
         else:
             log(f"REC_MSG:{msg_id}")
-
 
     def req(self):
         return self.request(
@@ -68,7 +64,7 @@ class IndiKRInfo(IndiAPI):
         self.origin.set_total_acnt(ret)
         self.indi_info_updated = True
         self.origin.save()
-        log('INDI_TOTAL_ACNT')
+        log("INDI_TOTAL_ACNT")
         self.quit()
 
     def rec_stock_acnt(self, req_id=None):

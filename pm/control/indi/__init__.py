@@ -1,7 +1,8 @@
 from pandas import DataFrame
-from PyQt5.QAxContainer import *
+from PyQt5.QAxContainer import QAxWidget
 
 from pm.config import cfg
+from pm.log import log
 
 
 class IndiAPI(object):
@@ -37,10 +38,7 @@ class IndiAPI(object):
 
     def request_data(self, name) -> int:
         """
-        :output:
-        :   -request id
-        :       -0: fail
-        :       -others: request id
+        :return req_id: 0(fail), others(request id)
         """
         req_id = self.indi.dynamicCall("RequestData()")
         self.req_ids[req_id] = name

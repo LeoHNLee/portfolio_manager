@@ -1,11 +1,10 @@
 import locale
+import logging
 from datetime import datetime as dt
 
-locale.setlocale(locale.LC_MONETARY, "en_US")
-
-import logging
-
 from pm.config import cfg
+
+locale.setlocale(locale.LC_MONETARY, "en_US")
 
 
 def dt2log(x):
@@ -41,12 +40,15 @@ def log_err(type, msg):
     print(ret)
 
 
-def log_request(method, url, header = None, body = None):
+def log_request(method, url, header=None, body=None):
     log("REQUEST", f"[Method:{method}][URL:{url}][Header:{header}][Body:{body}]")
 
 
-def log_response(code, method, url, header = None, body = None):
-    log("RESPONSE", f"[Code:{code}][Method:{method}][URL:{url}][Header:{header}][Body:{body}]")
+def log_response(code, method, url, header=None, body=None):
+    log(
+        "RESPONSE",
+        f"[Code:{code}][Method:{method}][URL:{url}][Header:{header}][Body:{body}]",
+    )
 
 
 def log_fail(type, msg):
@@ -85,18 +87,6 @@ def log_bid_kr(ticker, amt, price, order_id, total_val, cost):
 def log_bid_kr_fail(ticker, amt, price, order_id=-1, total_val=None, cost=None):
     msg = f"[Ticker:{ticker}][ExecAmt:{amt}][ExecPrice:{price}][OrderId:{order_id}][TotalVal:{total_val}][Cost:{cost}]"
     log_fail("BID_KR_FAIL", msg)
-
-
-def log_ask_kr(ticker, amt, price, order_id, total_val, cost, tax):
-    msg = f"[Ticker:{ticker}][ExecAmt:{amt}][ExecPrice:{price}][OrderId:{order_id}][TotalVal:{total_val}][Cost:{cost}][Tax:{tax}]"
-    log("ASK_KR", msg)
-
-
-def log_ask_kr_fail(
-    ticker, amt, price, order_id=-1, total_val=None, cost=None, tax=None
-):
-    msg = f"[Ticker:{ticker}][ExecAmt:{amt}][ExecPrice:{price}][OrderId:{order_id}][TotalVal:{total_val}][Cost:{cost}][Tax:{tax}]"
-    log_fail("ASK_KR_FAIL", msg)
 
 
 def log_bid(ticker, usd, exec_amt, exec_price, bf_amt):

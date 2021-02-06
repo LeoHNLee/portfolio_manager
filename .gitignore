@@ -7,3 +7,4 @@
 backup*
 .gitsecret/keys/random_seed
 !*.secret
+pm/config.py

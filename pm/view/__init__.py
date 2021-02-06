@@ -1,18 +1,16 @@
-import os
 import time
-from datetime import datetime as dt
 
 from _ctypes import COMError
 from PyQt5 import uic
-from PyQt5.QtCore import QDateTime, Qt, QTime
-from PyQt5.QtGui import QColor
+from PyQt5.QtCore import QDateTime, QTime
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 from pm.config import cfg
 from pm.control.casting import qtdt2dt, to_win_path
+from pm.control.gopax import Gopax
 from pm.control.indi.kr_info import IndiKRInfo
 from pm.control.shi import SHI
-from pm.control.gopax import Gopax
+from pm.log import log, log_err, log_init
 
 form_class = uic.loadUiType("pm/templates/main.ui")[0]
 
@@ -38,7 +36,6 @@ class PMWindow(QMainWindow, form_class):
         self.GopaxReady_pb.clicked.connect(self.gopax_ready)
         self.GopaxStart_pb.clicked.connect(self.gopax_start)
 
-
     def us_ready(self):
         self.api_origin_load()
         if self.Backup_cb.isChecked():
@@ -49,7 +46,7 @@ class PMWindow(QMainWindow, form_class):
     def us_popup(self):
         try:
             SHI.popup()
-        except (LookupError, COMError) as e:
+        except (LookupError, COMError):
             QMessageBox.warning(
                 self,
                 "Warning!",
@@ -68,7 +65,7 @@ class PMWindow(QMainWindow, form_class):
                 log_init(report)
 
     def us_start(self):
-        log('PRESS_US_START')
+        log("PRESS_US_START")
         if self.Backup_cb.isChecked():
             self.origin.backup()
 
@@ -90,13 +87,13 @@ class PMWindow(QMainWindow, form_class):
             )
         log("US_END")
 
-
-    def gopax_ready(self, _=None, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn='origin.csv'):
+    def gopax_ready(
+        self, _=None, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn="origin.csv"
+    ):
         file_path = to_win_path(root_path, dir_path, fn)
-        self.origin = Gopax.read_csv(file_path, encoding='cp949')
+        self.origin = Gopax.read_csv(file_path, encoding="cp949")
         if self.Backup_cb.isChecked():
             self.origin.backup()
-
 
     def gopax_start(self):
         log("Start_Gopax")
@@ -108,7 +105,7 @@ class PMWindow(QMainWindow, form_class):
     def api_shi_quit(self):
         try:
             SHI.quit()
-        except (LookupError, COMError) as e:
+        except (LookupError, COMError):
             QMessageBox.warning(
                 self,
                 "Warning!",
@@ -120,12 +117,5 @@ class PMWindow(QMainWindow, form_class):
     ):
         file_path = to_win_path(root_path, dir_path, fn)
         self.origin = SHI.read_csv(file_path, encoding="cp949")
-        self.origin_file_loaded = True
-        log('ORIGIN_LOAD')
-
-
-    def origin_load_kr(self, root_path=cfg.PATH_ROOT, dir_path=cfg.PATH_DATA, fn='origin.csv'):
-        file_path = to_win_path(root_path, dir_path, fn)
-        self.origin = KRCntr.read_csv(file_path, encoding="cp949")
         self.origin_file_loaded = True
         log("ORIGIN_LOAD")
